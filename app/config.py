@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     CLUB_NAME: str = "MVL ES"
     PLATFORM: str = "common-gen5"
     DB_PATH: str = "data/fc27_clubs.db"
-    SERVER_HOST: str = "127.0.0.1"
+    SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000
     INGEST_INTERVAL_SECONDS: int = 300
     INGEST_JITTER_SECONDS: int = 30

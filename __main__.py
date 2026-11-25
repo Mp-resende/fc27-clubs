@@ -15,14 +15,18 @@ import threading
 
 
 def _run_api() -> None:
+    import os
     import uvicorn
 
     from app.config import settings
 
+    port = int(os.environ.get("PORT") or settings.SERVER_PORT)
+    host = os.environ.get("SERVER_HOST") or "0.0.0.0"
+
     uvicorn.run(
         "app.api.main:app",
-        host=settings.SERVER_HOST,
-        port=settings.SERVER_PORT,
+        host=host,
+        port=port,
         reload=False,
     )
 
@@ -91,8 +95,14 @@ def main() -> None:
         cache_logger_on_first_use=True,
     )
 
+    import os
+    from app.config import settings
     from app.db.base import Base
     from app.db.session import engine
+
+    os.makedirs(os.path.dirname(settings.DB_PATH) or "data", exist_ok=True)
+    os.makedirs(settings.BACKUP_DIR, exist_ok=True)
+    os.makedirs(settings.EVIDENCE_DIR, exist_ok=True)
 
     Base.metadata.create_all(engine)
 
