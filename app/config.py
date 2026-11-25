@@ -5,8 +5,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     CLUB_ID: str = "682077"
-    CLUB_NAME: str = "MVL ES"
+    CLUB_NAME: str = "Clube Demo"
     PLATFORM: str = "common-gen5"
+    DATABASE_URL: str | None = None
     DB_PATH: str = "data/fc27_clubs.db"
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000

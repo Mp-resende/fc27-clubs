@@ -147,7 +147,7 @@
             name="q" 
             value="{{ search_query }}"
             required 
-            placeholder="Ex: MVL, Vasco, Flamengo, Real Madrid, Galáticos..." 
+            placeholder="Ex: Vasco, Flamengo, Real Madrid, Galáticos..." 
             class="w-full pl-10 pr-4 py-3.5 rounded-xl bg-brand-bg border border-brand-border focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan outline-none text-white text-sm placeholder:text-brand-subtle transition-all"
           >
         </div>
@@ -263,6 +263,18 @@
               </div>
 
               <div class="flex items-center gap-2.5">
+                <form method="POST" action="/clube/{{ tc.club_id }}/sincronizar" class="m-0" onsubmit="var btn = this.querySelector('button'); btn.disabled = true; btn.style.opacity = '0.7'; btn.innerText = 'Sincronizando...';">
+                  <input type="hidden" name="redirect_to" value="/meus-clubes" />
+                  <button 
+                    type="submit" 
+                    class="px-3 py-2 rounded-xl bg-brand-cyan/15 hover:bg-brand-cyan/25 text-brand-cyan border border-brand-cyan/30 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+                    title="Buscar partidas na EA Sports agora"
+                  >
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    <span>Sincronizar</span>
+                  </button>
+                </form>
+
                 <a 
                   href="/dashboard?club_id={{ tc.club_id }}" 
                   class="px-3.5 py-2 rounded-xl bg-brand-mint hover:bg-brand-accent text-black text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"

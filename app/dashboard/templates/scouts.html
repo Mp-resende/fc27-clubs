@@ -184,9 +184,9 @@
             <input 
               type="text" 
               id="ea-club-input" 
-              placeholder="Digite o ID do clube (Ex: 682077, 491230, 810452)..." 
+              placeholder="Digite o ID do clube (Ex: 491230, 810452, 160756)..." 
               class="w-full px-4 py-3 rounded-xl bg-brand-bg border border-brand-border text-white placeholder-brand-subtle focus:outline-none focus:border-brand-cyan text-sm font-mono"
-              value="682077"
+              value="491230"
               required
             />
             <button 
@@ -200,14 +200,14 @@
 
           <div class="flex flex-wrap items-center gap-2 text-xs text-brand-muted">
             <span>Exemplos em 1 clique:</span>
-            <button type="button" onclick="quickFillClub('682077', 'MVL ES')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-brand-text border border-white/5 font-mono">
-              682077 (MVL ES)
-            </button>
             <button type="button" onclick="quickFillClub('491230', 'Red Bull SP')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-brand-text border border-white/5 font-mono">
               491230 (Red Bull SP)
             </button>
             <button type="button" onclick="quickFillClub('810452', 'Galácticos FC')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-brand-text border border-white/5 font-mono">
               810452 (Galácticos FC)
+            </button>
+            <button type="button" onclick="quickFillClub('160756', 'Atlético BR')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-brand-text border border-white/5 font-mono">
+              160756 (Atlético BR)
             </button>
           </div>
         </form>
@@ -216,16 +216,16 @@
         <div id="ea-search-result" class="bg-brand-bg/90 border border-brand-border rounded-2xl p-5 space-y-5">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
             <div>
-              <h4 id="res-club-name" class="text-xl font-bold font-display text-white">MVL ES</h4>
+              <h4 id="res-club-name" class="text-xl font-bold font-display text-white">Red Bull SP</h4>
               <p class="text-xs text-brand-muted font-mono">
-                ID: <span id="res-club-id" class="text-white">682077</span> • Divisão Oficial EA
+                ID: <span id="res-club-id" class="text-white">491230</span> • Divisão Oficial EA
               </p>
             </div>
             <div>
               {% if current_user %}
                 <form method="POST" action="/meus-clubes/adicionar" class="m-0">
-                  <input type="hidden" name="club_id" id="monitor-club-id" value="682077" />
-                  <input type="hidden" name="club_name" id="monitor-club-name" value="MVL ES" />
+                  <input type="hidden" name="club_id" id="monitor-club-id" value="491230" />
+                  <input type="hidden" name="club_name" id="monitor-club-name" value="Red Bull SP" />
                   <button type="submit" class="px-4 py-2 rounded-xl bg-brand-cyan text-black font-bold text-xs flex items-center gap-1.5 hover:brightness-110 transition-all">
                     <i data-lucide="plus-circle" class="w-4 h-4"></i>
                     <span>+ Monitorar Este Clube</span>
@@ -243,19 +243,19 @@
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
             <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
               <span class="text-[11px] text-brand-subtle block">Jogos Totais</span>
-              <span id="res-club-games" class="text-lg font-bold text-white">284</span>
+              <span id="res-club-games" class="text-lg font-bold text-white">196</span>
             </div>
             <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
               <span class="text-[11px] text-brand-subtle block">Vitórias</span>
-              <span id="res-club-wins" class="text-lg font-bold text-brand-cyan">204</span>
+              <span id="res-club-wins" class="text-lg font-bold text-brand-cyan">138</span>
             </div>
             <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
               <span class="text-[11px] text-brand-subtle block">Aproveitamento</span>
-              <span id="res-club-ppg" class="text-lg font-bold text-white">71.8%</span>
+              <span id="res-club-ppg" class="text-lg font-bold text-white">70.4%</span>
             </div>
             <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
               <span class="text-[11px] text-brand-subtle block">Skill Rating</span>
-              <span id="res-club-skill" class="text-lg font-bold text-brand-mint">1.845</span>
+              <span id="res-club-skill" class="text-lg font-bold text-brand-mint">1.790</span>
             </div>
           </div>
         </div>
@@ -371,9 +371,9 @@
     }
 
     const sampleClubs = {
-      '682077': { name: 'MVL ES', games: '284', wins: '204', ppg: '71.8%', skill: '1.845' },
       '491230': { name: 'Red Bull SP', games: '196', wins: '138', ppg: '70.4%', skill: '1.790' },
-      '810452': { name: 'Galácticos FC', games: '320', wins: '245', ppg: '76.5%', skill: '1.920' }
+      '810452': { name: 'Galácticos FC', games: '320', wins: '245', ppg: '76.5%', skill: '1.920' },
+      '160756': { name: 'Atlético BR', games: '284', wins: '204', ppg: '71.8%', skill: '1.845' }
     };
 
     function quickFillClub(id, name) {

@@ -4,6 +4,7 @@ import json
 import pathlib
 from urllib.parse import quote
 
+import structlog
 from fastapi import (
     APIRouter,
     Depends,
@@ -97,6 +98,8 @@ from app.db.models import (
 
 _templates_dir = pathlib.Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(_templates_dir))
+
+log = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["dashboard"])
 
@@ -344,7 +347,7 @@ def dashboard_view(
         club_id = tracked_clubs[0].club_id
         club_name = tracked_clubs[0].club_name or f"Clube {club_id}"
     else:
-        # Visitante anônimo (modo demonstração de exemplo com MVL ES)
+        # Visitante anônimo (modo demonstração)
         club_id = settings.CLUB_ID
         club_name = settings.CLUB_NAME
 
@@ -1844,6 +1847,7 @@ def add_tracked_club(
     club_name: str | None = Form(None),
     platform: str = Form("common-gen5"),
     db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
     user: User | None = Depends(get_optional_user),
 ) -> RedirectResponse:
     if not user:
@@ -1873,9 +1877,63 @@ def add_tracked_club(
             db.add(tc)
         db.commit()
 
+        # Dispara sincronização inicial das partidas na EA Sports para o novo clube
+        try:
+            from app.worker.ingestor import ingest
+            from app.worker.scheduler import _make_ea_client
+            client = _make_ea_client()
+            ingest(
+                club_id=cid,
+                session=db,
+                client=client,
+                parser_version=settings.PARSER_VERSION,
+                platform=platform,
+            )
+        except Exception as exc:
+            log.warning("initial_sync_failed", club_id=cid, error=str(exc))
+
     dest_name = quote(cname or cid)
     return RedirectResponse(
-        url=f"/dashboard?club_id={cid}&msg=Clube+{dest_name}+adicionado+com+sucesso!+Iniciando+monitoramento.",
+        url=f"/dashboard?club_id={cid}&msg=Clube+{dest_name}+adicionado+e+sincronizado+com+sucesso!",
+        status_code=303,
+    )
+
+
+@router.post("/clube/{club_id}/sincronizar")
+def sync_club_now(
+    club_id: str,
+    request: Request,
+    redirect_to: str | None = Form(None),
+    platform: str = Form("common-gen5"),
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    user: User | None = Depends(get_optional_user),
+) -> Any:
+    """Dispara uma sincronização sob demanda do clube diretamente na EA Sports."""
+    cid = club_id.strip()
+    from app.worker.ingestor import ingest
+    from app.worker.scheduler import _make_ea_client
+
+    client = _make_ea_client()
+    try:
+        res = ingest(
+            club_id=cid,
+            session=db,
+            client=client,
+            parser_version=settings.PARSER_VERSION,
+            platform=platform,
+        )
+        msg = f"Sincronização com a EA concluída! {res.matches_inserted} novas partidas adicionadas, {res.matches_updated} atualizadas."
+        if res.errors:
+            msg += f" ({len(res.errors)} aviso(s))"
+    except Exception as exc:
+        log.error("sync_on_demand_error", club_id=cid, error=str(exc))
+        msg = f"Não foi possível sincronizar no momento: {str(exc)}"
+
+    target_url = redirect_to or f"/dashboard?club_id={cid}"
+    sep = "&" if "?" in target_url else "?"
+    return RedirectResponse(
+        url=f"{target_url}{sep}msg={quote(msg)}",
         status_code=303,
     )
 

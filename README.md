@@ -40,7 +40,7 @@ Copie `.env.example` para `.env` e ajuste se necessário:
 copy .env.example .env
 ```
 
-Os valores padrão já apontam para o clube **MVL ES** (ID `682077`) na plataforma `common-gen5`.
+Os valores padrão já apontam para o clube de demonstração (**Clube Demo**, ID `682077`) na plataforma `common-gen5`.
 
 ## Como iniciar
 

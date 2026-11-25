@@ -31,6 +31,13 @@ log = structlog.get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     log.info("api.startup")
+    try:
+        from app.db.base import Base
+        from app.db.session import engine
+        Base.metadata.create_all(bind=engine)
+        log.info("db.tables_verified")
+    except Exception as exc:
+        log.warning("db.tables_verify_error", error=str(exc))
     yield
     log.info("api.shutdown")
 

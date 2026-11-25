@@ -1,13 +1,13 @@
 @echo off
 setlocal EnableDelayedExpansion
 chcp 65001 >nul 2>nul
-title FC27 Clubs - MVL ES (Porta 8000)
+title FC27 Clubs - Clube Demo (Porta 8000)
 cd /d "%~dp0"
 
 echo.
 echo ==========================================================
 echo    FC27 CLUBS - EXTRATOR DE AMISTOSOS
-echo    Clube: MVL ES  ^|  ID: 682077
+echo    Clube: Clube Demo  ^|  ID: 682077
 echo ==========================================================
 echo.
 
