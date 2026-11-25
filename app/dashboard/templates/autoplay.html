@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upzin Autoplay — Automação Externa para Pro Clubs (PS5 & Xbox)</title>
+  <meta name="description" content="Evolua seu Pro no Clubs no piloto automático com facilidade e segurança. Feito para PlayStation 5 e Xbox, sem alterar nenhum arquivo do jogo.">
+  <link rel="icon" type="image/png" href="/static/assets/icone-32.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#08090D',
+              surface: '#0F121A',
+              card: '#131722',
+              border: 'rgba(255, 255, 255, 0.08)',
+              mint: '#00F59B',
+              mintDark: '#10B981',
+              accent: '#5BE38F',
+              cyan: '#38BDF8',
+              text: '#EEF1F8',
+              muted: '#94A3B8',
+              subtle: '#64748B'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          boxShadow: {
+            'glow-mint': '0 0 35px -5px rgba(0, 245, 155, 0.25)',
+            'card-elevated': '0 20px 40px -15px rgba(0, 0, 0, 0.7)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .bg-grid-pattern {
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 3.5rem 3.5rem;
+    }
+    .radial-mask {
+      mask-image: radial-gradient(ellipse 65% 55% at 50% 0%, #000 70%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 65% 55% at 50% 0%, #000 70%, transparent 100%);
+    }
+    .hero-glow {
+      background: radial-gradient(circle at 50% -10%, rgba(0, 245, 155, 0.18), transparent 70%);
+    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #08090D; }
+    ::-webkit-scrollbar-thumb { background: #1e2536; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00F59B; }
+  </style>
+</head>
+<body class="bg-brand-bg text-brand-text font-sans antialiased selection:bg-brand-mint selection:text-black min-h-screen relative overflow-x-hidden">
+
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute inset-0 hero-glow"></div>
+    <div class="absolute inset-0 bg-grid-pattern radial-mask opacity-60"></div>
+  </div>
+
+  <!-- MODAL SMARTSCREEN -->
+  <div id="modal-smartscreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
+    <div class="bg-brand-surface border border-white/10 rounded-2xl max-w-xl w-full p-6 sm:p-8 relative shadow-2xl text-left">
+      <button onclick="toggleModal('modal-smartscreen', false)" class="absolute top-5 right-5 text-brand-muted hover:text-white p-1 rounded-lg">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <i data-lucide="shield-alert" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold font-display text-white">Transparência Windows SmartScreen</h3>
+          <p class="text-xs text-brand-muted">Entenda por que softwares independentes recebem esse aviso</p>
+        </div>
+      </div>
+
+      <div class="space-y-4 text-sm text-brand-muted leading-relaxed">
+        <p>
+          O <strong class="text-white">Windows SmartScreen</strong> é um mecanismo preventivo da Microsoft para programas novos de desenvolvedores independentes.
+        </p>
+        <div class="bg-brand-bg/80 border border-white/5 p-4 rounded-xl space-y-2">
+          <span class="text-xs uppercase font-mono tracking-wider text-brand-mint font-semibold">Como Executar em 2 Cliques:</span>
+          <ol class="list-decimal list-inside space-y-1 text-xs text-brand-text">
+            <li>Na tela de aviso, clique no link <strong class="text-white underline">"Mais informações"</strong>.</li>
+            <li>Em seguida, clique no botão <strong class="text-white underline">"Executar assim mesmo"</strong>.</li>
+          </ol>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+          <i data-lucide="shield-check" class="w-4 h-4 shrink-0"></i>
+          <span>Arquivo 100% limpo com 0 detecções no VirusTotal.</span>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button onclick="toggleModal('modal-smartscreen', false)" class="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold">
+          Entendi, fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="fixed top-0 left-0 right-0 z-40 px-4 sm:px-6 lg:px-8 pt-4">
+    <div class="max-w-6xl mx-auto backdrop-blur-xl bg-brand-surface/85 border border-brand-border rounded-2xl px-4 sm:px-6 py-3 flex items-center justify-between shadow-2xl">
+      
+      <div class="flex items-center gap-4">
+        <a href="/" class="text-xs font-semibold text-brand-muted hover:text-white flex items-center gap-1.5 transition-colors">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Hub Principal</span>
+        </a>
+        <span class="text-white/20">|</span>
+        <a href="/autoplay" class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-brand-bg border border-brand-mint/40 p-1 flex items-center justify-center shadow-glow-mint">
+            <img src="/static/assets/upzin-simbolo.svg" alt="Upzin" class="w-full h-full object-contain">
+          </div>
+          <span class="font-display font-black text-white text-base">UPZIN <span class="text-brand-mint text-xs font-normal uppercase">Autoplay</span></span>
+        </a>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-6 text-xs lg:text-sm font-medium text-brand-muted">
+        <a href="#como-funciona" class="hover:text-brand-mint transition-colors">Como Funciona</a>
+        <a href="#seguranca" class="hover:text-brand-mint transition-colors">Anti-Cheat</a>
+        <a href="#compatibilidade" class="hover:text-brand-mint transition-colors">PS5 & Xbox</a>
+        <a href="#precos" class="hover:text-brand-mint transition-colors">Preços</a>
+        <a href="/scouts" class="text-brand-cyan hover:underline flex items-center gap-1">
+          <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Ver Upzin Scouts
+        </a>
+      </nav>
+
+      <a href="https://github.com/Mp-resende/upzin-releases/releases/latest/download/UpzinAutoplay_oficial.zip" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-black bg-brand-mint hover:bg-brand-accent shadow-glow-mint transition-all flex items-center gap-2">
+        <i data-lucide="download" class="w-4 h-4"></i>
+        <span>Baixar Teste 48h</span>
+      </a>
+
+    </div>
+  </header>
+
+  <main class="relative z-10 pt-28 sm:pt-36 pb-20 space-y-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- HERO DO AUTOPLAY -->
+    <section class="text-center">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-surface border border-brand-mint/30 shadow-glow-mint mb-6">
+        <i data-lucide="shield-check" class="w-4 h-4 text-brand-mint"></i>
+        <span class="text-xs font-mono font-medium tracking-wide text-brand-mint uppercase">Automação Externa para PS5 & Xbox • 100% Indetectável</span>
+      </div>
+
+      <h1 class="text-4xl sm:text-6xl font-display font-black tracking-tight text-white leading-[1.12]">
+        Evolua seu Pro no Clubs no <span class="bg-gradient-to-r from-brand-mint to-brand-accent bg-clip-text text-transparent">Piloto Automático.</span>
+      </h1>
+
+      <p class="mt-4 text-base sm:text-xl text-brand-muted max-w-2xl mx-auto leading-relaxed">
+        Sem mexer nos arquivos do jogo e sem arriscar sua conta. O robô joga assistindo à tela transmitida no PC e enviando comandos de controle como uma pessoa real.
+      </p>
+
+      <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="https://github.com/Mp-resende/upzin-releases/releases/latest/download/UpzinAutoplay_oficial.zip" class="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-bold text-black bg-brand-mint hover:bg-brand-accent shadow-glow-mint transition-all flex items-center justify-center gap-2.5">
+          <i data-lucide="download" class="w-5 h-5"></i>
+          <span>Baixar Teste Grátis (48 Horas)</span>
+        </a>
+        <a href="https://t.me/UpzinAtendimento" target="_blank" class="w-full sm:w-auto px-6 py-4 rounded-xl text-sm font-semibold text-brand-text bg-brand-surface border border-brand-border hover:bg-brand-card transition-all flex items-center justify-center gap-2">
+          <i data-lucide="send" class="w-4 h-4 text-brand-cyan"></i>
+          <span>Atendimento no Telegram</span>
+        </a>
+      </div>
+
+      <p class="mt-3 text-xs text-brand-subtle flex items-center justify-center gap-3">
+        <span>✓ 48 horas ativadas no 1º uso</span>
+        <span>✓ Sem necessidade de cartão</span>
+        <span>✓ Descompacte e rode</span>
+      </p>
+    </section>
+
+    <!-- BANNER DE COMPATIBILIDADE -->
+    <section id="compatibilidade" class="p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 text-left flex flex-col sm:flex-row items-start gap-4">
+      <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+        <i data-lucide="alert-octagon" class="w-6 h-6"></i>
+      </div>
+      <div class="space-y-1">
+        <span class="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-wider block">Regra Exclusiva de Plataforma</span>
+        <h3 class="text-lg font-bold text-white font-display">O Autoplay roda no PlayStation 5 e Xbox (Não funciona no jogo de PC)</h3>
+        <p class="text-xs text-brand-muted leading-relaxed">
+          Se você comprou o EA FC instalado no Windows (Steam ou EA App), o robô não funciona nele. Ele foi feito para quem joga no <strong>PlayStation 5</strong> (via Chiaki-ng) ou no <strong>Xbox</strong> (via Chrome). É exatamente por operar pelo lado de fora que ele é 100% seguro contra banimentos.
+        </p>
+      </div>
+    </section>
+
+    <!-- RÉPLICA DA INTERFACE WINDOWS -->
+    <section id="como-funciona" class="space-y-6">
+      <div class="text-center max-w-2xl mx-auto">
+        <h2 class="text-xs font-mono uppercase tracking-widest text-brand-mint font-bold mb-2">Visão Computacional</h2>
+        <h3 class="text-2xl sm:text-3xl font-display font-extrabold text-white">Como é o Software no seu Computador</h3>
+      </div>
+
+      <div class="relative max-w-3xl mx-auto rounded-2xl p-1 bg-gradient-to-b from-white/10 to-transparent shadow-card-elevated">
+        <div class="bg-[#0D0F1A] border border-white/10 rounded-2xl overflow-hidden text-left shadow-2xl font-sans">
+          <div class="px-4 py-2 bg-[#151A2B] border-b border-white/5 flex items-center justify-between select-none">
+            <div class="flex items-center gap-2">
+              <img src="/static/assets/icone-16.png" alt="Upzin Icon" class="w-4 h-4 object-contain opacity-90">
+              <span class="text-xs font-medium text-[#EEF1F8]">Upzin Autoplay — PRO 1.0.2</span>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-[#A9B1CC]">
+              <span>─</span><span>□</span><span>✕</span>
+            </div>
+          </div>
+
+          <div class="p-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-xl font-bold font-display text-white">Upzin Autoplay</h4>
+                <p class="text-xs text-[#A9B1CC]">Automação Inteligente | <span class="text-white font-mono">[F12] Parada de Emergência</span></p>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold font-mono bg-[#13824A] text-white">
+                EM PARTIDA (CLUBS 11x11)
+              </span>
+            </div>
+
+            <div class="bg-[#151A2B] rounded-xl px-4 py-3 flex items-center justify-between text-xs sm:text-sm font-bold text-white">
+              <span class="text-[#5BE38F]">⚽ Partidas: 18</span>
+              <span class="text-[#89b4fa]">⏱️ Tempo: 4h 12min</span>
+              <span class="text-[#f9e2af]">📈 Ganho: +8.100 XP</span>
+            </div>
+
+            <div class="bg-[#08090D] rounded-xl p-3 font-mono text-xs text-brand-muted space-y-1 h-32 overflow-hidden border border-white/5">
+              <div class="text-[#A9B1CC]">[17:02:15] 🖥️ Tela do jogo conectada via Chiaki-ng / PS5.</div>
+              <div class="text-[#89b4fa]">[17:02:22] 🔍 Procurando partida no matchmaking oficial...</div>
+              <div class="text-white font-semibold">[17:02:35] ⚽ Partida encontrada! Entrando em campo...</div>
+              <div class="text-[#5BE38F]">[17:02:40] 🏃 Movimentação analógica suave e pausas ativas.</div>
+              <div class="text-[#5BE38F] font-bold">[17:18:20] 🏆 Fim de partida! +450 XP creditados no Pro.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEGURANÇA ANTI-CHEAT -->
+    <section id="seguranca" class="space-y-6 pt-8 border-t border-white/5">
+      <div class="text-center max-w-2xl mx-auto">
+        <h2 class="text-xs font-mono uppercase tracking-widest text-brand-mint font-bold mb-2">Engenharia Anti-Detecção</h2>
+        <h3 class="text-2xl sm:text-3xl font-display font-extrabold text-white">Por que o Upzin é Imune a Bans?</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+        <div class="p-6 rounded-2xl bg-brand-surface border-2 border-red-500/30">
+          <span class="text-xs font-mono text-red-400 font-bold uppercase block mb-2">❌ Cheats Invasivos (Perigo)</span>
+          <h4 class="text-base font-bold text-white mb-2">Injeção de DLL e Memória</h4>
+          <p class="text-xs text-brand-muted leading-relaxed">
+            Modificam o jogo por dentro. O Anti-Cheat da EA detecta o arquivo alterado em minutos e suspende a conta para sempre.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-brand-surface border-2 border-brand-mint/60 shadow-glow-mint">
+          <span class="text-xs font-mono text-brand-mint font-bold uppercase block mb-2">✅ Upzin Autoplay (Seguro)</span>
+          <h4 class="text-base font-bold text-white mb-2">Visão Computacional Externa</h4>
+          <p class="text-xs text-brand-muted leading-relaxed">
+            Funciona como uma pessoa sentada na sala com o controle na mão. Não altera arquivos, não injeta DLLs e não toca no videogame.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREÇOS AUTOPLAY -->
+    <section id="precos" class="space-y-6 pt-8 border-t border-white/5">
+      <div class="text-center max-w-2xl mx-auto">
+        <h2 class="text-xs font-mono uppercase tracking-widest text-brand-mint font-bold mb-2">Planos e Acesso</h2>
+        <h3 class="text-2xl sm:text-3xl font-display font-extrabold text-white">Comece de Graça. Assine Quando Comprovar.</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto text-left">
+        <div class="p-6 rounded-2xl bg-brand-surface border border-white/10 flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-mono text-brand-subtle uppercase font-bold">Teste Gratuito</span>
+            <h4 class="text-xl font-bold font-display text-white mt-1">48 Horas Grátis</h4>
+            <div class="my-4">
+              <span class="text-3xl font-bold text-white font-display">R$ 0</span>
+              <span class="text-xs text-brand-muted">/ 48h completas</span>
+            </div>
+            <ul class="space-y-2 text-xs text-brand-muted mb-6">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Acesso irrestrito a todos os recursos</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Sem necessidade de cartão de crédito</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Ativação automática por computador</li>
+            </ul>
+          </div>
+          <a href="https://github.com/Mp-resende/upzin-releases/releases/latest/download/UpzinAutoplay_oficial.zip" class="w-full text-center py-3 rounded-xl border border-brand-mint/30 hover:bg-brand-mint/10 text-brand-mint font-bold text-xs transition-all">
+            Baixar Teste 48h
+          </a>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-brand-surface border-2 border-brand-mint shadow-glow-mint flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-mono text-brand-mint uppercase font-bold">Plano Oficial</span>
+            <h4 class="text-xl font-bold font-display text-white mt-1">Assinatura Mensal</h4>
+            <div class="my-4">
+              <span class="text-3xl font-bold text-white font-display">R$ 39,90</span>
+              <span class="text-xs text-brand-muted">/ mês (Pix)</span>
+            </div>
+            <ul class="space-y-2 text-xs text-brand-muted mb-6">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Uso ilimitado durante toda a temporada</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Atualizações automáticas pós-patch</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Garantia incondicional de 7 dias</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Suporte prioritário no Telegram</li>
+            </ul>
+          </div>
+          <a href="https://t.me/UpzinAtendimento" target="_blank" class="w-full text-center py-3 rounded-xl bg-brand-mint hover:bg-brand-accent text-black font-bold text-xs shadow-glow-mint transition-all">
+            Assinar via Telegram
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-brand-border bg-brand-bg/95 relative z-10 py-8 px-4 text-xs text-brand-muted">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+      <div class="flex items-center gap-3">
+        <a href="/" class="text-white hover:underline">← Voltar ao Hub</a>
+        <span class="text-white/20">|</span>
+        <a href="/scouts" class="text-brand-cyan hover:underline">Conhecer o Upzin Scouts →</a>
+      </div>
+      <p class="text-[11px] text-brand-subtle">
+        © 2026 Upzin Autoplay. Software independente para PlayStation 5 e Xbox.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    lucide.createIcons();
+    function toggleModal(id, show) {
+      const modal = document.getElementById(id);
+      if (show) modal.classList.remove('hidden');
+      else modal.classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

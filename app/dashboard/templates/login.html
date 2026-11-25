@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar na sua Conta — Upzin Scouts</title>
+  <meta name="description" content="Acesse o dashboard do seu clube no Upzin Scouts.">
+  <link rel="icon" type="image/png" href="/static/assets/icone-32.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#08090D',
+              surface: '#0F121A',
+              card: '#131722',
+              border: 'rgba(255, 255, 255, 0.08)',
+              mint: '#00F59B',
+              cyan: '#38BDF8',
+              text: '#EEF1F8',
+              muted: '#94A3B8',
+              subtle: '#64748B'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          boxShadow: {
+            'glow-cyan': '0 0 30px -5px rgba(56, 189, 248, 0.25)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .bg-grid-pattern {
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 3rem 3rem;
+    }
+  </style>
+</head>
+<body class="bg-brand-bg text-brand-text font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-brand-cyan selection:text-black relative">
+
+  <!-- Background Pattern -->
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute inset-0 bg-grid-pattern opacity-40"></div>
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[350px] bg-brand-cyan/10 blur-[120px] rounded-full pointer-events-none"></div>
+  </div>
+
+  <!-- Header Simplificado -->
+  <header class="relative z-10 px-4 sm:px-6 lg:px-8 pt-6">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="w-9 h-9 rounded-xl bg-brand-surface border border-white/10 flex items-center justify-center p-1.5 shadow-sm transition-transform group-hover:scale-105">
+          <img src="/static/assets/upzin-simbolo.svg" alt="Upzin Logo" class="w-full h-full object-contain">
+        </div>
+        <div class="flex flex-col">
+          <span class="font-display font-bold text-base text-white tracking-tight flex items-center gap-1.5">
+            UPZIN <span class="text-brand-cyan text-xs font-semibold px-1.5 py-0.5 rounded bg-brand-cyan/10 border border-brand-cyan/20">Scouts</span>
+          </span>
+        </div>
+      </a>
+      <a href="/scouts" class="text-xs font-semibold text-brand-muted hover:text-white flex items-center gap-1 transition-colors">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        <span>Voltar ao Scouts</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Container Principal -->
+  <main class="relative z-10 flex-1 flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+      
+      <!-- Card de Login -->
+      <div class="bg-brand-surface border border-brand-border rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative">
+        
+        <!-- Header do Card -->
+        <div class="text-center mb-6">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-cyan/10 border border-brand-cyan/25 text-brand-cyan text-xs font-mono font-semibold mb-3">
+            <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+            <span>Painel do Clube</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-display font-extrabold text-white tracking-tight">
+            Acesse sua Conta
+          </h1>
+          <p class="text-xs sm:text-sm text-brand-muted mt-2">
+            Entre para gerenciar seus clubes e visualizar partidas.
+          </p>
+        </div>
+
+        <!-- Alerta de Erro -->
+        {% if erro or request.query_params.get('erro') %}
+        <div class="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-start gap-2.5">
+          <i data-lucide="alert-circle" class="w-4 h-4 text-red-400 shrink-0 mt-0.5"></i>
+          <span>{{ erro or request.query_params.get('erro') }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Mensagem de Sucesso (ex: logout ou redirect) -->
+        {% if request.query_params.get('msg') %}
+        <div class="mb-5 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-start gap-2.5">
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+          <span>{{ request.query_params.get('msg') }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Formulário -->
+        <form method="POST" action="/login" class="space-y-4">
+          <div>
+            <label for="email" class="block text-xs font-semibold text-brand-muted uppercase tracking-wider mb-1.5">
+              E-mail
+            </label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              required 
+              value="{{ email or '' }}"
+              placeholder="seu@email.com" 
+              class="w-full px-4 py-3 rounded-xl bg-brand-bg border border-brand-border focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan outline-none text-white text-sm transition-all placeholder:text-brand-subtle"
+            >
+          </div>
+
+          <div>
+            <label for="password" class="block text-xs font-semibold text-brand-muted uppercase tracking-wider mb-1.5">
+              Senha
+            </label>
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              required 
+              placeholder="Sua senha de acesso" 
+              class="w-full px-4 py-3 rounded-xl bg-brand-bg border border-brand-border focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan outline-none text-white text-sm transition-all placeholder:text-brand-subtle"
+            >
+          </div>
+
+          <button 
+            type="submit" 
+            class="w-full py-3.5 px-4 rounded-xl bg-brand-cyan hover:brightness-110 text-black font-bold text-sm text-center shadow-glow-cyan transition-all flex items-center justify-center gap-2 mt-4 cursor-pointer"
+          >
+            <i data-lucide="log-in" class="w-4 h-4"></i>
+            <span>Entrar no Painel</span>
+          </button>
+        </form>
+
+        <!-- Rodapé do Card -->
+        <div class="mt-6 pt-5 border-t border-white/5 text-center text-xs text-brand-muted">
+          Ainda não tem conta? 
+          <a href="/cadastro" class="text-brand-cyan hover:underline font-semibold ml-1">Cadastre-se grátis</a>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer Simplificado -->
+  <footer class="relative z-10 py-6 text-center text-xs text-brand-subtle">
+    Upzin Scouts • Inteligência tática para o Pro Clubs
+  </footer>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

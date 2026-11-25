@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+{% block title %}Súmula{% endblock %}
+
+{% block content %}
+{% if match %}
+{% if request.query_params.get('msg') or message %}<div class="flash">{{ request.query_params.get('msg') or message }}</div>{% endif %}
+{% if request.query_params.get('erro') or error %}<div class="alert">{{ request.query_params.get('erro') or error }}</div>{% endif %}
+<div class="scoreboard">
+  <div class="team">
+    {% if club_a.crest_url %}<img src="{{ club_a.crest_url }}" alt="" class="crest" onerror="this.style.display='none'">{% endif %}
+    {{ club_a.name }}
+  </div>
+  <div class="score-big">
+    {% if review.is_ignored %}<span class="score-ignored">—</span>{% else %}{{ match.club_a_goals }} – {{ match.club_b_goals }}{% endif %}
+  </div>
+  <div class="team">
+    {% if club_b.crest_url %}<img src="{{ club_b.crest_url }}" alt="" class="crest" onerror="this.style.display='none'">{% endif %}
+    {{ club_b.name }}
+  </div>
+</div>
+<p class="match-meta">
+  {{ match.played_at[:10] }} · {{ match_type_label }}
+  {% if match.dnf %} · <span class="badge loss">DNF</span>{% endif %}
+  {% if review %}<span class="badge {{ review.badge }}">{{ review.status_label }}</span>{% endif %}
+  {% if review.score_changed %} · <span class="sub-inline">Placar EA: {{ review.ea_score }} · {{ review.result_source_label }}</span>{% endif %}
+</p>
+
+{% if review and (review.needs_review or review.is_ignored or review.score_changed) %}
+<div class="review-banner">
+  <strong>{{ review.status_label }}</strong>
+  {% if review.reason_label %} — {{ review.reason_label }}{% endif %}
+  {% if review.note %}<p class="sub">{{ review.note }}</p>{% endif %}
+  {% if not review.is_counted %}
+  <p class="sub">Esta partida <strong>não entra</strong> nas estatísticas até o resultado ser confirmado ou corrigido.</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="panel" id="revisao">
+  <h2>Revisão do resultado</h2>
+  <p class="sub">
+    Use este painel quando a partida foi abandonada pelos dois clubes, quando houve
+    desistência (W.O. 3x0) ou quando o placar da EA não representa o jogo real.
+    Você pode confirmar o placar, ignorar a partida ou enviar um print do resumo.
+  </p>
+
+  <div class="review-actions">
+    <form method="post" action="/partidas/{{ match.match_id }}/revisao/confirmar" class="inline-form">
+      <button type="submit" class="btn">✓ Confirmar placar da EA</button>
+    </form>
+    <form method="post" action="/partidas/{{ match.match_id }}/revisao/ignorar" class="inline-form"
+          onsubmit="return confirm('Ignorar esta partida e removê-la das estatísticas?');">
+      <button type="submit" class="btn-danger">Ignorar partida</button>
+    </form>
+    {% if review.is_ignored %}
+    <form method="post" action="/partidas/{{ match.match_id }}/revisao/restaurar" class="inline-form">
+      <button type="submit" class="btn-secondary">Restaurar partida</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <h3>Corrigir placar manualmente</h3>
+  <form method="post" action="/partidas/{{ match.match_id }}/revisao/corrigir" class="form-grid">
+    <label>Gols de {{ club_a.name }} *
+      <input type="number" name="club_a_goals" min="0" max="99" required value="{{ suggested_a }}" />
+    </label>
+    <label>Gols de {{ club_b.name }} *
+      <input type="number" name="club_b_goals" min="0" max="99" required value="{{ suggested_b }}" />
+    </label>
+    <label class="span-2">Motivo / observação
+      <input type="text" name="note" maxlength="2000" value="{{ review.note or '' }}" placeholder="Ex.: empate real 1x1; adversário quitou" />
+    </label>
+    <div class="form-actions span-2">
+      <button type="submit" class="btn">Salvar placar corrigido</button>
+    </div>
+  </form>
+
+  <h3>Enviar print da partida</h3>
+  <form method="post" action="/partidas/{{ match.match_id }}/evidencia" enctype="multipart/form-data" class="form-grid">
+    <label>Print / foto do resumo *
+      <input type="file" name="file" accept="image/png,image/jpeg,image/webp" required />
+    </label>
+    <label>Observação
+      <input type="text" name="note" maxlength="2000" placeholder="Opcional" />
+    </label>
+    <label class="checkbox-label span-2">
+      <input type="checkbox" name="apply" value="true" />
+      Aplicar automaticamente se o placar for extraído com segurança
+    </label>
+    <div class="form-actions span-2">
+      <button type="submit" class="btn">Extrair dados do print</button>
+    </div>
+  </form>
+
+  {% if extraction %}
+  <div class="extraction-box">
+    <h4>Dados extraídos {% if extraction.extractor %}· {{ extraction.extractor }}{% endif %}</h4>
+    {% if extraction.warnings %}
+    <ul class="extraction-warnings">
+      {% for warning in extraction.warnings %}<li>{{ warning }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% if extraction.data.get('club_a_goals') is not none %}
+    <p class="extraction-score">
+      Sugestão de placar: <strong>{{ extraction.data.get('club_a_goals') }} – {{ extraction.data.get('club_b_goals') }}</strong>
+    </p>
+    {% endif %}
+    {% if extraction.data.get('team_a') or extraction.data.get('team_b') %}
+    <p class="sub">Times no print: {{ extraction.data.get('team_a') or '?' }} x {{ extraction.data.get('team_b') or '?' }}</p>
+    {% endif %}
+    {% if extraction.data.get('possession') %}
+    <p class="sub">Posse de bola: {{ extraction.data.get('possession') }}</p>
+    {% endif %}
+    {% if extraction.data.get('scorers') %}
+    <details>
+      <summary>Gols no print</summary>
+      <ul>
+        {% for goal in extraction.data.get('scorers') %}
+        <li>
+          {% if goal is mapping %}
+          {{ goal.get('player') or '?' }}{% if goal.get('team') %} ({{ goal.get('team') }}){% endif %}{% if goal.get('minute') is not none %} · {{ goal.get('minute') }}'{% endif %}
+          {% else %}{{ goal }}{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+    {% if extraction.data.get('cards') %}
+    <details>
+      <summary>Cartões no print</summary>
+      <ul>
+        {% for card in extraction.data.get('cards') %}
+        <li>
+          {% if card is mapping %}
+          {{ card.get('player') or '?' }}{% if card.get('team') %} ({{ card.get('team') }}){% endif %}{% if card.get('type') %} · {{ card.get('type') }}{% endif %}
+          {% else %}{{ card }}{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+    {% if extraction.data.get('confidence') is not none %}
+    <p class="sub">Confiança: {{ extraction.data.get('confidence') }}</p>
+    {% endif %}
+    {% if extraction.data.get('score_candidates') %}
+    <details>
+      <summary>Outros placares encontrados no texto</summary>
+      <ul>
+        {% for candidate in extraction.data.get('score_candidates') %}
+        <li>{{ candidate.a }} – {{ candidate.b }} <span class="sub-inline">{{ candidate.line }}</span></li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+    {% if extraction.data.get('raw_text') %}
+    <details>
+      <summary>Texto lido</summary>
+      <pre class="json-block">{{ extraction.data.get('raw_text') }}</pre>
+    </details>
+    {% endif %}
+    <p class="sub">Confira a sugestão acima e use “Corrigir placar manualmente” para confirmar.</p>
+  </div>
+  {% endif %}
+
+  {% if evidence %}
+  <h3>Evidências enviadas</h3>
+  <ul class="evidence-list">
+    {% for item in evidence %}
+    <li>
+      <a href="/evidencias/{{ item.id }}" target="_blank" rel="noopener">{{ item.original_name or 'print' }}</a>
+      <span class="sub-inline">{{ item.created_at }} · extrator: {{ item.extractor }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Campeonato</h2>
+  {% if classification %}
+  <p class="classification-current">
+    <a href="/campeonatos/{{ classification.championship_id }}" class="chip" style="--chip: {{ classification.championship_color }}">{{ classification.championship_name }}</a>
+    {% if classification.stage %}<span class="sub-inline">{{ classification.stage }}</span>{% endif %}
+    {% if classification.round %}<span class="sub-inline">Rodada {{ classification.round }}</span>{% endif %}
+    {% if classification.leg %}<span class="sub-inline">{{ leg_labels.get(classification.leg, classification.leg) }}</span>{% endif %}
+    {% if classification.group_name %}<span class="sub-inline">Grupo {{ classification.group_name }}</span>{% endif %}
+    {% for tag in classification.tags %}<span class="tag">{{ tag }}</span>{% endfor %}
+  </p>
+  {% if classification.notes %}<p class="sub">📝 {{ classification.notes }}</p>{% endif %}
+  {% else %}
+  <p class="sub">Esta partida ainda não está vinculada a um campeonato.</p>
+  {% endif %}
+
+  {% if championships %}
+  <form method="post" action="/partidas/{{ match.match_id }}/classificar" class="form-grid">
+    <label>Campeonato *
+      <select name="championship_id" required>
+        <option value="">Selecione…</option>
+        {% for c in championships %}
+        <option value="{{ c.id }}" {% if classification and classification.championship_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Fase
+      <input type="text" name="stage" list="stage-suggestions" value="{{ classification.stage or '' if classification else '' }}" placeholder="Ex.: Fase de grupos" />
+    </label>
+    <label>Rodada
+      <input type="text" name="round" value="{{ classification.round or '' if classification else '' }}" placeholder="Ex.: 3" />
+    </label>
+    <label>Perna
+      <select name="leg">
+        <option value="">—</option>
+        <option value="ida" {% if classification and classification.leg == 'ida' %}selected{% endif %}>Ida</option>
+        <option value="volta" {% if classification and classification.leg == 'volta' %}selected{% endif %}>Volta</option>
+        <option value="unico" {% if classification and classification.leg == 'unico' %}selected{% endif %}>Jogo único</option>
+      </select>
+    </label>
+    <label>Grupo
+      <input type="text" name="group_name" value="{{ classification.group_name or '' if classification else '' }}" placeholder="Ex.: A" />
+    </label>
+    <label>Tags
+      <input type="text" name="tags" value="{{ classification.tags|join(', ') if classification else '' }}" placeholder="clássico, decisão" />
+    </label>
+    <label class="span-2">Notas
+      <textarea name="notes" rows="2" placeholder="Observações opcionais">{{ classification.notes or '' if classification else '' }}</textarea>
+    </label>
+    <div class="form-actions span-2">
+      <button type="submit" class="btn">Salvar classificação</button>
+    </div>
+  </form>
+
+  {% if classification %}
+  <form method="post" action="/partidas/{{ match.match_id }}/desclassificar" class="inline-form">
+    <button type="submit" class="btn-danger">Remover do campeonato</button>
+  </form>
+  {% endif %}
+
+  <datalist id="stage-suggestions">
+    {% for stage in stage_suggestions %}<option value="{{ stage }}"></option>{% endfor %}
+  </datalist>
+  {% else %}
+  <p class="sub">Nenhum campeonato cadastrado ainda. <a href="/campeonatos">Criar o primeiro campeonato</a>.</p>
+  {% endif %}
+</div>
+
+{% if review.is_ignored == false and analytics %}
+<div class="panel">
+  <h2>Comparação dos times</h2>
+  {% if analytics.stats and analytics.stats.get(match.club_a_id) and analytics.stats.get(match.club_b_id) %}
+  <table class="table compare-table">
+    <thead>
+      <tr><th>Métrica</th><th>{{ club_a.name }}</th><th>{{ club_b.name }}</th></tr>
+    </thead>
+    <tbody>
+      {% for row in analytics.comparison %}
+      <tr>
+        <td>{{ row.label }}{% if row.unit %} <span class="sub-inline">({{ row.unit }})</span>{% endif %}</td>
+        <td class="{% if row.a is not none and row.b is not none and row.a > row.b %}txt-win{% endif %}">
+          {{ row.a if row.a is not none else "—" }}
+        </td>
+        <td class="{% if row.a is not none and row.b is not none and row.b > row.a %}txt-win{% endif %}">
+          {{ row.b if row.b is not none else "—" }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="sub">Sem estatísticas de equipe para esta partida.</p>
+  {% endif %}
+
+  {% if analytics.has_events %}
+  <p class="sub">
+    Métricas de evento (dribles, interceptações, recuperações no ataque) somadas a partir
+    das estatísticas dos {{ analytics.players_with_events }} jogador(es) com partidas de eventos (liga/playoff).
+  </p>
+  {% else %}
+  <p class="sub">
+    <strong>Sem eventos detalhados nesta partida.</strong>
+    A EA só fornece telemetria de eventos em partidas de liga e playoff;
+    amistosos trazem apenas as estatísticas de resumo acima.
+  </p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% set club_a_players = players | selectattr("club_id", "equalto", match.club_a_id) | list %}
+{% set club_b_players = players | selectattr("club_id", "equalto", match.club_b_id) | list %}
+
+<div class="match-teams">
+  {% for team_players, team_id, team_view in [(club_a_players, match.club_a_id, club_a), (club_b_players, match.club_b_id, club_b)] %}
+  <div class="team-section">
+    <h2>{{ team_view.name }}</h2>
+    {% if team_players %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Jogador</th>
+          <th>Pos</th>
+          <th>Nota</th>
+          <th>G</th>
+          <th>A</th>
+          <th>Chutes</th>
+          <th>Passes</th>
+          <th>Defesas</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in team_players %}
+        <tr>
+          <td>
+            <a href="/jogadores/{{ p.player_key }}">{{ p.playername }}</a>
+            {% if p.is_mom %}<span class="badge mom">⭐ MOM</span>{% endif %}
+          </td>
+          <td>{{ p.position or "—" }}</td>
+          <td class="rating {% if p.rating and p.rating >= 7 %}rating-good{% elif p.rating and p.rating >= 6 %}rating-avg{% elif p.rating %}rating-bad{% endif %}">
+            {% if p.rating is not none %}{{ "%.1f"|format(p.rating) }}{% else %}—{% endif %}
+          </td>
+          <td>{{ p.goals }}</td>
+          <td>{{ p.assists }}</td>
+          <td>{{ p.shots }}</td>
+          <td>{{ p.passes_made }}</td>
+          <td>{{ p.saves }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">Sem dados de jogadores.</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">Partida não encontrada.</p>
+{% endif %}
+{% endblock %}

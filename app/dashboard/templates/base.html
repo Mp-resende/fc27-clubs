@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Início{% endblock %} — {{ club_name }}</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="/" style="text-decoration: none; color: inherit;"><span class="brand">⚽ {{ club_name }}</span></a>
+    </div>
+    <ul>
+      <li><a href="/">Início</a></li>
+      <li><a href="/partidas">Partidas</a></li>
+      <li><a href="/campeonatos">Campeonatos</a></li>
+      <li><a href="/revisao">Revisão</a></li>
+      <li><a href="/jogadores">Jogadores</a></li>
+      <li><a href="/analise">Análise</a></li>
+      <li><a href="/h2h">H2H</a></li>
+      <li><a href="/explorar">🔍 Explorar EA</a></li>
+      <li><a href="/status">Status</a></li>
+    </ul>
+    <div class="user-nav" style="display: flex; align-items: center; gap: 0.75rem; margin-left: auto;">
+      {% if current_user %}
+        <a href="/meus-clubes" class="btn btn-sm btn-subtle" style="text-decoration: none;">Meus Clubes</a>
+        <span style="font-size: 0.85rem; color: #9ca3af;">{{ current_user.email }}</span>
+        <a href="/logout" style="color: #ef4444; font-size: 0.85rem; text-decoration: none;">Sair</a>
+      {% else %}
+        <a href="/login" class="btn btn-sm btn-subtle" style="text-decoration: none;">Entrar</a>
+        <a href="/cadastro" class="btn btn-sm" style="background: #22c55e; color: #000; font-weight: bold; text-decoration: none; padding: 0.35rem 0.75rem; border-radius: 4px;">Criar Conta Grátis</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <main class="container">
+    {% if free_limit_applied %}
+      <div class="banner-pro" style="background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%); border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; padding: 1rem 1.25rem; border-radius: 6px; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <span style="font-weight: bold; color: #60a5fa; display: flex; align-items: center; gap: 0.4rem;">
+            ℹ️ Histórico em modo inicial de demonstração
+          </span>
+          <p style="margin: 0.35rem 0 0; font-size: 0.9rem; color: #cbd5e1;">
+            Exibindo as 20 partidas mais recentes desta prévia. Cadastre seu clube para monitorar todas as partidas.
+          </p>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if request.query_params.get('msg') %}<div class="flash">{{ request.query_params.get('msg') }}</div>{% endif %}
+    {% if request.query_params.get('erro') %}<div class="alert">{{ request.query_params.get('erro') }}</div>{% endif %}
+    {% if erro %}<div class="alert">{{ erro }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <small>FC27 Clubs Monitor · v0.3 · Dados em tempo real da EA e histórico de partidas</small>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %}Telemetria{% endblock %}
+
+{% block content %}
+<h1>Telemetria — {{ club_name }}</h1>
+<p class="sub">
+  Eventos por jogador (passes, dribles, recuperações, finalizações) extraídos do
+  <code>match_event_aggregate</code> da EA.
+</p>
+
+<div class="empty">
+  <strong>Amistosos não têm telemetria.</strong>
+  A EA só fornece os eventos detalhados em partidas de <strong>liga e playoff</strong>.
+  Partidas amistosas entram nas estatísticas básicas (nota, gols, passes resumidos), mas não nas
+  métricas avançadas desta página.
+</div>
+
+<div class="filter-bar">
+  <form method="get" action="/telemetria" class="filter-form">
+    <label>Tipo
+      <select name="tipo">
+        <option value="">Todos</option>
+        {% for key, label in type_labels.items() %}
+        <option value="{{ key }}" {% if filters.match_type == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Adversário
+      <select name="adversario">
+        <option value="">Todos</option>
+        {% for opp in opponents %}
+        <option value="{{ opp.club_id }}" {% if filters.opponent == opp.club_id %}selected{% endif %}>{{ opp.name }} ({{ opp.played }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Janela
+      <select name="dias">
+        <option value="">Sempre</option>
+        <option value="7" {% if filters.days == 7 %}selected{% endif %}>7 dias</option>
+        <option value="30" {% if filters.days == 30 %}selected{% endif %}>30 dias</option>
+        <option value="90" {% if filters.days == 90 %}selected{% endif %}>90 dias</option>
+      </select>
+    </label>
+    <button type="submit" class="btn">Aplicar</button>
+    {% if filter_description %}<span class="sub">{{ filter_description | join(' · ') }}</span>{% endif %}
+  </form>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-value">{{ profile.matches_with_events }}/{{ profile.matches }}</span>
+    <span class="stat-label">Partidas com eventos</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ profile.team_minutes or "—" }}</span>
+    <span class="stat-label">Minutos efetivos do time</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ profile.per90.passes or "—" }}</span>
+    <span class="stat-label">Passes certos/90</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ profile.per90.press_wins or "—" }}</span>
+    <span class="stat-label">Recuperações no ataque/90</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ profile.per90.def_actions or "—" }}</span>
+    <span class="stat-label">Ações defensivas/90</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ coverage.mapped_pct or "—" }}%</span>
+    <span class="stat-label">Eventos mapeados ({{ coverage.mapped }} de {{ coverage.total }})</span>
+  </div>
+</div>
+
+{% if profile.has_events %}
+<h2>Assinatura de jogo <span class="source-tag local">Fonte: eventos das partidas filtradas</span></h2>
+<div class="chart-grid">
+  <div class="chart-container">
+    <canvas id="radarChart"
+            data-labels='{{ profile.radar | map(attribute="label") | list | tojson }}'
+            data-values='{{ profile.radar | map(attribute="value") | list | tojson }}'></canvas>
+  </div>
+  <div class="chart-container">
+    <canvas id="directionsChart"
+            data-labels='{{ directions | map(attribute="playername") | list | tojson }}'
+            data-forward='{{ directions | map(attribute="forward") | list | tojson }}'
+            data-sideways='{{ directions | map(attribute="sideways") | list | tojson }}'
+            data-backward='{{ directions | map(attribute="backward") | list | tojson }}'></canvas>
+  </div>
+</div>
+
+<div class="chart-grid">
+  <div class="panel">
+    <h3>Recuperações por terço do campo</h3>
+    <table class="table">
+      <thead><tr><th>Terço</th><th>Recuperadas</th><th>Perdidas</th></tr></thead>
+      <tbody>
+        <tr><td>Campos defensivos</td><td>{{ profile.thirds.won.defensive }}</td><td>{{ profile.thirds.lost.defensive }}</td></tr>
+        <tr><td>Meio-campo</td><td>{{ profile.thirds.won.middle }}</td><td>{{ profile.thirds.lost.middle }}</td></tr>
+        <tr><td>Ataque</td><td>{{ profile.thirds.won.attacking }}</td><td>{{ profile.thirds.lost.attacking }}</td></tr>
+      </tbody>
+    </table>
+    <h3>Passes por direção</h3>
+    <table class="table">
+      <thead><tr><th>Direção</th><th>Total</th><th>Share</th></tr></thead>
+      <tbody>
+        {% for item in profile.pass_directions %}
+        <tr>
+          <td>{{ item.label }}</td>
+          <td>{{ item.value }}</td>
+          <td>{{ "%.0f"|format(100 * item.value / profile.pass_directions_total) if profile.pass_directions_total else "—" }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h3>Eventos do time (maior → menor)</h3>
+    <table class="table">
+      <thead><tr><th>Evento</th><th>Total</th></tr></thead>
+      <tbody>
+        {% for item in team_totals %}
+        <tr><td>{{ item.label }}</td><td>{{ item.value }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h2>Eventos por jogador</h2>
+{% if players %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Jogador</th><th>Min.</th><th>Passes certos/90</th><th>Dribles/90</th>
+      <th>Ações defensivas/90</th><th>Pressão alta/90</th><th>Pré-assist.</th><th>Power</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in players %}
+    <tr>
+      <td><a href="/jogadores/{{ p.player_key }}">{{ p.playername }}</a></td>
+      <td>{{ p.minutes }}</td>
+      <td>{{ p.passes_per90 }}</td>
+      <td>{{ p.dribbles_per90 }}</td>
+      <td>{{ p.def_actions_per90 }}</td>
+      <td>{{ p.press_wins_per90 }}</td>
+      <td>{{ p.second_assists }}</td>
+      <td>{{ p.power_index or "—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">Nenhum jogador com eventos nos filtros atuais.</p>
+{% endif %}
+
+{% if coverage.orphan_codes %}
+<details class="panel">
+  <summary><strong>{{ coverage.orphan }}</strong> de {{ coverage.total }} eventos RAW fora do mapa do decoder
+    ({{ "%.1f"|format(100 * coverage.orphan / coverage.total) if coverage.total else 0 }}%) — os 12 códigos mais frequentes:</summary>
+  <table class="table">
+    <thead><tr><th>Código do evento</th><th>Ocorrências</th></tr></thead>
+    <tbody>
+      {% for item in coverage.orphan_codes %}
+      <tr><td><code>{{ item.event_id }}</code></td><td>{{ item.count }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</details>
+{% endif %}
+{% else %}
+<p class="empty">
+  Nenhuma partida com eventos nos filtros atuais
+  ({{ match_count }} partidas consideradas). Sincronize jogos de liga ou playoff para
+  popular esta aba — <code>python __main__.py sync</code>.
+</p>
+{% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (!window.Chart) return;
+    const radar = document.getElementById("radarChart");
+    if (radar) {
+      new Chart(radar, {
+        type: "radar",
+        data: {
+          labels: JSON.parse(radar.dataset.labels || "[]"),
+          datasets: [{
+            label: "Time (0-100)",
+            data: JSON.parse(radar.dataset.values || "[]"),
+            borderColor: "#3b82f6",
+            backgroundColor: "rgba(59,130,246,0.2)",
+            pointBackgroundColor: "#3b82f6",
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { r: { min: 0, max: 100, ticks: { display: false }, pointLabels: { color: "#94a3b8" }, grid: { color: "rgba(42,45,58,0.8)" } } },
+          plugins: { legend: { display: false } },
+        },
+      });
+    }
+    const dirs = document.getElementById("directionsChart");
+    if (dirs) {
+      new Chart(dirs, {
+        type: "bar",
+        data: {
+          labels: JSON.parse(dirs.dataset.labels || "[]"),
+          datasets: [
+            { label: "Para frente", data: JSON.parse(dirs.dataset.forward), backgroundColor: "#22c55e", stack: "s" },
+            { label: "Para o lado", data: JSON.parse(dirs.dataset.sideways), backgroundColor: "#3b82f6", stack: "s" },
+            { label: "Para trás", data: JSON.parse(dirs.dataset.backward), backgroundColor: "#a78bfa", stack: "s" },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: "y",
+          scales: { x: { stacked: true }, y: { stacked: true, ticks: { autoSkip: false } } },
+        },
+      });
+    }
+  });
+</script>
+{% endblock %}

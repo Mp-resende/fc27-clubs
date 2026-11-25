@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}{{ display_name }}{% endblock %}
+
+{% block content %}
+<h1>
+  {{ display_name }}
+  {% if member and member.overall %}<small class="sub">OV {{ member.overall }} · {{ member.position_label if member.position_label else member.position }}</small>{% endif %}
+  {% if summary and summary.position_label %}<span class="pos-badge {{ summary.position_group | lower }}">{{ summary.position_label }}</span>{% endif %}
+</h1>
+
+{% if summary %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-value">{{ summary.matches }}</span>
+    <span class="stat-label">Jogos (amostra filtrada)</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ summary.minutes }}</span>
+    <span class="stat-label">Minutos</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ "%.2f"|format(summary.avg_rating) if summary.avg_rating is not none else "—" }}</span>
+    <span class="stat-label">Nota média</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ summary.goals }} / {{ summary.assists }}</span>
+    <span class="stat-label">Gols / Assistências</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ summary.involvement_per90 or "—" }}</span>
+    <span class="stat-label">G+A por 90</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ summary.power_index or "—" }}</span>
+    <span class="stat-label">Power Index</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ summary.consistency or "—" }}</span>
+    <span class="stat-label">Consistência</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ summary.participation or "—" }}%</span>
+    <span class="stat-label">Participação nos gols</span>
+  </div>
+</div>
+<p class="sub">
+  Melhor nota: {{ summary.best_rating or "—" }} · Pós-jogos apertados (clutch): {{ summary.clutch or "—" }} ·
+  Rating ajustado por posição: {{ summary.rating_adj or "—" }} · MOTM: {{ summary.motm }}
+  {% if summary.pass_accuracy is not none %} · Precisão de passe: {{ summary.pass_accuracy }}%{% endif %}
+</p>
+{% else %}
+<p class="empty">Jogador sem partidas na amostra com os filtros atuais.</p>
+{% endif %}
+
+{% if member %}
+<h2>Temporada EA <span class="source-tag ea">Fonte: EA</span></h2>
+<div class="stats-grid">
+  <div class="stat-card"><span class="stat-value">{{ member.games_played or "—" }}</span><span class="stat-label">Jogos temporada</span></div>
+  <div class="stat-card win"><span class="stat-value">{{ member.win_rate or "—" }}%</span><span class="stat-label">Aproveitamento</span></div>
+  <div class="stat-card"><span class="stat-value">{{ member.goals or 0 }}</span><span class="stat-label">Gols temporada</span></div>
+  <div class="stat-card"><span class="stat-value">{{ member.assists or 0 }}</span><span class="stat-label">Assistências temporada</span></div>
+  <div class="stat-card"><span class="stat-value">{{ member.rating_avg or "—" }}</span><span class="stat-label">Nota EA</span></div>
+  <div class="stat-card"><span class="stat-value">{{ member.man_of_the_match or 0 }}</span><span class="stat-label">MOTM temporada</span></div>
+</div>
+<p class="sub">
+  Passes certos: {{ member.passes_made or 0 }} ({{ member.pass_success_rate or "—" }}%) ·
+  Precisão de chute: {{ member.shot_success_rate or "—" }}% ·
+  Desarmes: {{ member.tackles_made or 0 }} ({{ member.tackle_success_rate or "—" }}%)
+</p>
+{% if member.prev_goals %}
+<div class="form-strip">
+  <span class="form-label">Gols nos últimos jogos (EA, mais recente primeiro):</span>
+  {% for g in member.prev_goals %}
+  <span class="form-pill {{ 'goal' if g else 'nogoal' }}" title="Gols na partida {{ loop.index }}">{{ g }}</span>
+  {% endfor %}
+</div>
+{% endif %}
+{% endif %}
+
+{% if career %}
+<h2>Carreira no clube <span class="source-tag ea">Fonte: EA</span></h2>
+<div class="stats-grid">
+  <div class="stat-card"><span class="stat-value">{{ career.games_played or "—" }}</span><span class="stat-label">Jogos totais</span></div>
+  <div class="stat-card"><span class="stat-value">{{ career.goals or 0 }}</span><span class="stat-label">Gols totais</span></div>
+  <div class="stat-card"><span class="stat-value">{{ career.assists or 0 }}</span><span class="stat-label">Assistências totais</span></div>
+  <div class="stat-card"><span class="stat-value">{{ career.man_of_the_match or 0 }}</span><span class="stat-label">MOTM totais</span></div>
+  <div class="stat-card"><span class="stat-value">{{ career.rating_avg or "—" }}</span><span class="stat-label">Nota média</span></div>
+</div>
+{% endif %}
+
+{% if chart_history %}
+<h2>Evolução de nota</h2>
+<div class="chart-container">
+  <canvas id="ratingChart"
+          data-labels='{{ chart_labels | tojson }}'
+          data-values='{{ chart_values | tojson }}'></canvas>
+</div>
+{% endif %}
+
+<h2>Histórico de partidas</h2>
+{% set letter_labels = {"W": "V", "D": "E", "L": "D"} %}
+{% if history %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Data</th><th>Adversário</th><th>Tipo</th><th>Placar</th><th>Pos.</th><th>Min.</th>
+      <th>Nota</th><th>G</th><th>A</th><th>Finaliz.</th><th>Pass.</th><th>Desarmes</th><th>MOM</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ps in history %}
+    <tr>
+      <td>{{ ps.played_at[:10] if ps.played_at else "—" }}</td>
+      <td><a href="/partidas/{{ ps.match_id }}">{{ ps.opponent_name }}</a></td>
+      <td><span class="badge type">{{ ps.type_label }}</span></td>
+      <td class="{% if ps.letter == "W" %}txt-win{% elif ps.letter == "D" %}txt-draw{% else %}txt-loss{% endif %}">
+        {{ ps.goals_for }} – {{ ps.goals_against }}
+        <span class="form-pill {{ ps.letter | lower }}">{{ letter_labels.get(ps.letter, ps.letter) }}</span>
+      </td>
+      <td class="sub-inline">{{ ps.position or "—" }}</td>
+      <td>{{ ps.minutes }}</td>
+      <td class="rating {% if ps.rating and ps.rating >= 7 %}rating-good{% elif ps.rating and ps.rating >= 6 %}rating-avg{% elif ps.rating %}rating-bad{% endif %}">
+        {{ ps.rating if ps.rating is not none else "—" }}
+      </td>
+      <td>{{ ps.goals }}</td>
+      <td>{{ ps.assists }}</td>
+      <td>{{ ps.shots }}</td>
+      <td>{{ ps.passes_made }}/{{ ps.pass_attempts }}</td>
+      <td>{{ ps.tackles_made }}</td>
+      <td>{% if ps.is_mom %}⭐{% else %}—{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">Nenhuma partida com os filtros atuais.</p>
+{% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const canvas = document.getElementById("ratingChart");
+    if (!canvas || !window.Chart) return;
+    const labels = JSON.parse(canvas.dataset.labels || "[]");
+    const values = JSON.parse(canvas.dataset.values || "[]");
+    new Chart(canvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Nota por partida",
+          data: values,
+          borderColor: "#3b82f6",
+          backgroundColor: "rgba(59,130,246,0.15)",
+          fill: true,
+          spanGaps: true,
+          tension: 0.3,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { suggestedMin: 4, suggestedMax: 10 },
+          x: { ticks: { maxRotation: 60, autoSkip: true, maxTicksLimit: 14 } },
+        },
+      },
+    });
+  });
+</script>
+{% endblock %}

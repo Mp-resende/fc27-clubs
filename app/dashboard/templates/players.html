@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Jogadores{% endblock %}
+
+{% block content %}
+<h1>Elenco — {{ club_name }}</h1>
+<p class="sub">
+  Cartões de temporada (Estatísticas dos Membros da EA) unidos com a amostra local de partidas.
+  Elenco: {{ counts.members }} membros · {{ counts.linked }} vinculados · {{ counts.unlinked }} sem vínculo ·
+  {{ counts.local_only }} só na amostra local.
+</p>
+
+<div class="filter-bar">
+  <form method="get" action="/jogadores" class="filter-form">
+    <label>Posição
+      <select name="posicao">
+        <option value="">Todas</option>
+        {% for key, label in position_labels.items() %}
+        {% if key != "UNK" %}
+        <option value="{{ key }}" {% if posicao == key %}selected{% endif %}>{{ label }}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </label>
+    <label>Mín. jogos
+      <input type="number" name="min_jogos" min="0" max="99" value="{{ min_jogos }}" style="width:5rem" />
+    </label>
+    <label>Ordem
+      <select name="ordem">
+        <option value="power" {% if ordem == "power" %}selected{% endif %}>Power Index</option>
+        <option value="overall" {% if ordem == "overall" %}selected{% endif %}>Overall EA</option>
+        <option value="rating" {% if ordem == "rating" %}selected{% endif %}>Nota</option>
+        <option value="ga90" {% if ordem == "ga90" %}selected{% endif %}>G+A/90</option>
+        <option value="goals" {% if ordem == "goals" %}selected{% endif %}>Gols</option>
+        <option value="name" {% if ordem == "name" %}selected{% endif %}>Nome</option>
+      </select>
+    </label>
+    <label>Tipo
+      <select name="tipo">
+        <option value="">Todos</option>
+        {% for key, label in type_labels.items() %}
+        <option value="{{ key }}" {% if filters.match_type == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Janela
+      <select name="dias">
+        <option value="">Sempre</option>
+        <option value="7" {% if filters.days == 7 %}selected{% endif %}>7 dias</option>
+        <option value="30" {% if filters.days == 30 %}selected{% endif %}>30 dias</option>
+        <option value="90" {% if filters.days == 90 %}selected{% endif %}>90 dias</option>
+      </select>
+    </label>
+    <button type="submit" class="btn">Aplicar</button>
+  </form>
+</div>
+
+{% if cards %}
+<div class="player-cards">
+  {% for card in cards %}
+  {% set member = card.member %}
+  {% set local = card.local %}
+  <div class="player-card {% if not card.is_linked %}player-card-unlinked{% endif %}">
+    <div class="player-card-head">
+      <a href="/jogadores/{{ local.player_key if local else (member.player_key if member and member.player_key else '') }}"
+         class="player-name">{{ member.name if member else (local.playername if local else "?") }}</a>
+      {% if member.overall %}<span class="ovr-badge" title="Overall">{{ member.overall }}</span>{% endif %}
+    </div>
+    <div class="player-card-tags">
+      <span class="pos-badge {{ card.position_group | lower }}">{{ card.position_label }}</span>
+      {% if member.position %}<span class="sub-inline">{{ member.position }}</span>{% endif %}
+      {% if not card.is_linked %}<span class="badge warn" title="Membro da EA sem jogador local correspondente">sem vínculo</span>{% endif %}
+    </div>
+    {% if member %}
+    <p class="sub small">Temporada EA: {{ member.games_played or 0 }} jogos ·
+      nota {{ member.rating_avg or "—" }} · {{ member.goals or 0 }}G {{ member.assists or 0 }}A ·
+      {{ member.pass_success_rate or "—" }}% passes</p>
+    {% endif %}
+    {% if local %}
+    <dl>
+      <div><dt>Nota local</dt><dd>{{ "%.2f"|format(local.avg_rating) if local.avg_rating is not none else "—" }}</dd></div>
+      <div><dt>G+A/90</dt><dd>{{ local.involvement_per90 or "—" }}</dd></div>
+      <div><dt>Minutos</dt><dd>{{ local.minutes }}</dd></div>
+      <div><dt>Jogos</dt><dd>{{ local.matches }}</dd></div>
+      <div><dt>G+A</dt><dd>{{ local.involvement }}</dd></div>
+      <div><dt>MOM</dt><dd>{{ local.motm }}</dd></div>
+    </dl>
+    {% else %}
+    <p class="sub small">Sem partidas registradas localmente com os filtros atuais.</p>
+    {% endif %}
+    {% if member and not card.is_linked %}
+    <details class="link-inline">
+      <summary class="sub">Vincular a jogador local</summary>
+      <form method="post" action="/vincular-membro" class="inline-form">
+        <input type="hidden" name="membro" value="{{ member.name }}" />
+        <select name="player_key" required>
+          <option value="">Escolher jogador…</option>
+          {% for opt in player_options %}
+          <option value="{{ opt.player_key }}">Jogador {{ opt.playername }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-small">Vincular</button>
+      </form>
+    </details>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">
+  Elenco não sincronizado. Rode <code>python __main__.py sync</code> para trazer
+  a Estatística dos Membros da EA.
+</p>
+{% endif %}
+
+{% if scatter %}
+<h2>Participação por 90 minutos</h2>
+<p class="sub">Cada ponto é um jogador com ao menos 30 min: gols/90 (x) x assistências/90 (y).
+  Fonte: amostra local com os filtros atuais.</p>
+<div class="chart-container chart-lg">
+  <canvas id="scatterChart"
+          data-points='{{ scatter | tojson }}'></canvas>
+</div>
+{% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const canvas = document.getElementById("scatterChart");
+    if (!canvas || !window.Chart) return;
+    const points = JSON.parse(canvas.dataset.points || "[]");
+    const palette = { GK: "#94a3b8", DEF: "#38bdf8", MID: "#a78bfa", FWD: "#f59e0b", UNK: "#64748b" };
+    const names = { GK: "Goleiro", DEF: "Defensor", MID: "Meia", FWD: "Atacante", UNK: "—" };
+    const groups = {};
+    points.forEach(p => { (groups[p.group] = groups[p.group] || []).push(p); });
+    new Chart(canvas, {
+      type: "scatter",
+      data: {
+        datasets: Object.entries(groups).map(([group, list]) => ({
+          label: names[group] || group,
+          data: list.map(p => ({ x: p.x, y: p.y, name: p.name, minutes: p.minutes })),
+          backgroundColor: palette[group] || "#64748b",
+          pointRadius: 6,
+          pointHoverRadius: 9,
+        })),
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { title: { display: true, text: "Gols por 90 min" }, beginAtZero: true },
+          y: { title: { display: true, text: "Assistências por 90 min" }, beginAtZero: true },
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const p = ctx.raw;
+                return `${p.name} · ${p.x} gols/90, ${p.y} assist/90 (${p.minutes} min)`;
+              },
+            },
+          },
+        },
+      },
+    });
+  });
+</script>
+{% endblock %}

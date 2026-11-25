@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Revisão de partidas{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Revisão de partidas</h1>
+  <form method="post" action="/revisao/reanalisar" class="inline-form">
+    <button type="submit" class="btn-secondary">⟳ Reanalisar todas</button>
+  </form>
+</div>
+
+<p class="sub">
+  Partidas que podem ter resultado irreal: abandonadas pelos dois clubes, W.O. 3x0
+  ou placares que não conferem com as estatísticas. Resultados aguardando revisão
+  e ignorados ficam fora das estatísticas até serem confirmados ou corrigidos.
+</p>
+
+{% if msg %}<div class="flash">{{ msg }}</div>{% endif %}
+
+<div class="review-counts">
+  <span class="badge warn">{{ pending }} aguardando revisão</span>
+  <span class="badge ignored">{{ ignored }} ignorada(s)</span>
+</div>
+
+{% if matches %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Confronto</th>
+      <th>Placar EA</th>
+      <th>Situação</th>
+      <th>Motivo</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in matches %}
+    <tr class="{% if m.review.status == 'ignored' %}row-ignored{% endif %}">
+      <td>{{ m.played_at[:10] }}</td>
+      <td>{{ m.club_a_name }} <span class="vs">vs</span> {{ m.club_b_name }}</td>
+      <td class="score-cell">
+        {% if m.review.status == 'ignored' %}<span class="score-ignored">{{ m.club_a_goals }} – {{ m.club_b_goals }}</span>
+        {% else %}{{ m.club_a_goals }} – {{ m.club_b_goals }}{% endif %}
+      </td>
+      <td><span class="badge {{ m.review.badge }}">{{ m.review.status_label }}</span></td>
+      <td class="review-reason">{{ m.review.reason_label or '—' }}</td>
+      <td class="review-actions-cell">
+        <a href="/partidas/{{ m.match_id }}" class="btn-link">Súmula</a>
+        {% if m.review.status == 'needs_review' %}
+        <form method="post" action="/partidas/{{ m.match_id }}/revisao/confirmar" class="inline-form">
+          <button type="submit" class="btn-secondary">Confirmar</button>
+        </form>
+        <form method="post" action="/partidas/{{ m.match_id }}/revisao/ignorar" class="inline-form">
+          <button type="submit" class="btn-danger">Ignorar</button>
+        </form>
+        {% elif m.review.status == 'ignored' %}
+        <form method="post" action="/partidas/{{ m.match_id }}/revisao/restaurar" class="inline-form">
+          <button type="submit" class="btn-secondary">Restaurar</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">Nenhuma partida pendente. 🎉</p>
+{% endif %}
+{% endblock %}

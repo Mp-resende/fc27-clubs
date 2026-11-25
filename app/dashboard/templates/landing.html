@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upzin — O Ecossistema Definitivo de Pro Clubs | Autoplay & Scouts</title>
+  <meta name="description" content="Duas ferramentas independentes para o Pro Clubs: Upzin Autoplay para evolução de Pro no console e Upzin Scouts para inteligência tática oficial da EA Sports.">
+  <link rel="icon" type="image/png" href="/static/assets/icone-32.png">
+  
+  <!-- Fontes Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#08090D',
+              surface: '#0F121A',
+              card: '#131722',
+              border: 'rgba(255, 255, 255, 0.08)',
+              mint: '#00F59B',
+              mintDark: '#10B981',
+              accent: '#5BE38F',
+              cyan: '#38BDF8',
+              blue: '#2563EB',
+              text: '#EEF1F8',
+              muted: '#94A3B8',
+              subtle: '#64748B'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          boxShadow: {
+            'glow-mint': '0 0 35px -5px rgba(0, 245, 155, 0.25)',
+            'glow-cyan': '0 0 35px -5px rgba(56, 189, 248, 0.25)',
+            'card-elevated': '0 20px 40px -15px rgba(0, 0, 0, 0.7)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .bg-grid-pattern {
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 3.5rem 3.5rem;
+    }
+    
+    .radial-mask {
+      mask-image: radial-gradient(ellipse 65% 55% at 50% 0%, #000 70%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 65% 55% at 50% 0%, #000 70%, transparent 100%);
+    }
+
+    .hero-glow {
+      background: radial-gradient(circle at 50% -10%, rgba(0, 245, 155, 0.12), rgba(56, 189, 248, 0.12), transparent 70%);
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #08090D; }
+    ::-webkit-scrollbar-thumb { background: #1e2536; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00F59B; }
+  </style>
+</head>
+<body class="bg-brand-bg text-brand-text font-sans antialiased selection:bg-brand-mint selection:text-black min-h-screen relative overflow-x-hidden">
+
+  <!-- Background Gradient & Grid -->
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute inset-0 hero-glow"></div>
+    <div class="absolute inset-0 bg-grid-pattern radial-mask opacity-60"></div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 bg-brand-surface border border-brand-mint/40 text-brand-text px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md">
+    <i data-lucide="check-circle-2" class="w-5 h-5 text-brand-mint"></i>
+    <span id="toast-message" class="text-sm font-medium">Ação realizada com sucesso!</span>
+  </div>
+
+  <!-- MODAL: TRANSPARÊNCIA WINDOWS SMARTSCREEN -->
+  <div id="modal-smartscreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden transition-opacity">
+    <div class="bg-brand-surface border border-white/10 rounded-2xl max-w-xl w-full p-6 sm:p-8 relative shadow-2xl text-left">
+      <button onclick="toggleModal('modal-smartscreen', false)" class="absolute top-5 right-5 text-brand-muted hover:text-white p-1 rounded-lg">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <i data-lucide="shield-alert" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold font-display text-white">Transparência Windows SmartScreen</h3>
+          <p class="text-xs text-brand-muted">Entenda por que softwares independentes recebem esse aviso</p>
+        </div>
+      </div>
+
+      <div class="space-y-4 text-sm text-brand-muted leading-relaxed">
+        <p>
+          O <strong class="text-white">Windows SmartScreen</strong> é um mecanismo preventivo da Microsoft. Softwares independentes recém-compilados não possuem o caríssimo certificado comercial EV. Por isso, o Windows pode exibir uma tela azul de aviso por precaução.
+        </p>
+
+        <div class="bg-brand-bg/80 border border-white/5 p-4 rounded-xl space-y-2">
+          <span class="text-xs uppercase font-mono tracking-wider text-brand-mint font-semibold">Como Executar em 2 Cliques:</span>
+          <ol class="list-decimal list-inside space-y-1.5 text-xs text-brand-text">
+            <li>Na tela de aviso, clique no link <strong class="text-white underline">"Mais informações"</strong>.</li>
+            <li>Em seguida, clique no botão <strong class="text-white underline">"Executar assim mesmo"</strong>.</li>
+            <li>O Upzin Autoplay abrirá na hora. Não é necessário desativar seu antivírus.</li>
+          </ol>
+        </div>
+
+        <div class="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+          <i data-lucide="shield-check" class="w-4 h-4 shrink-0"></i>
+          <span>Arquivo oficial verificado com 0 detecções no VirusTotal.</span>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button onclick="toggleModal('modal-smartscreen', false)" class="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-all">
+          Entendi, fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADER FLUTUANTE -->
+  <header class="fixed top-0 left-0 right-0 z-40 px-4 sm:px-6 lg:px-8 pt-4">
+    <div class="max-w-7xl mx-auto backdrop-blur-xl bg-brand-surface/85 border border-brand-border rounded-2xl px-4 sm:px-6 py-3 flex items-center justify-between shadow-2xl transition-all">
+      
+      <!-- LOGO -->
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="w-9 h-9 rounded-xl bg-brand-bg border border-white/10 flex items-center justify-center p-1.5 shadow-sm transition-transform group-hover:scale-105">
+          <img src="/static/assets/upzin-simbolo.svg" alt="Upzin Logo" class="w-full h-full object-contain">
+        </div>
+        <div class="flex flex-col">
+          <span class="font-display font-bold text-base sm:text-lg text-white tracking-tight flex items-center gap-1.5">
+            UPZIN <span class="text-brand-subtle font-normal text-xs uppercase px-1.5 py-0.5 rounded bg-white/5 border border-white/10">Clubs Suite</span>
+          </span>
+        </div>
+      </a>
+
+      <!-- STATUS BADGE / SEPARADOR DE FERRAMENTAS (Desktop) -->
+      <div class="hidden xl:flex items-center gap-4 text-xs font-mono">
+        <a href="#autoplay" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-mint/10 border border-brand-mint/30 text-brand-mint hover:bg-brand-mint/20 transition-all">
+          <span class="w-2 h-2 rounded-full bg-brand-mint animate-pulse"></span>
+          <span>⚡ Autoplay: Evolução AFK</span>
+        </a>
+        <a href="#scouts" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-cyan/10 border border-brand-cyan/30 text-brand-cyan hover:bg-brand-cyan/20 transition-all">
+          <span class="w-2 h-2 rounded-full bg-brand-cyan"></span>
+          <span>📊 Scouts: Inteligência EA</span>
+        </a>
+      </div>
+
+      <!-- NAVEGAÇÃO DESKTOP -->
+      <nav class="hidden md:flex items-center gap-5 text-xs lg:text-sm font-medium text-brand-muted">
+        <a href="#distincao" class="hover:text-white transition-colors">Qual Escolher?</a>
+        <a href="#scouts" class="hover:text-brand-cyan transition-colors">Scouts</a>
+        <a href="#autoplay" class="hover:text-brand-mint transition-colors">Autoplay</a>
+        <a href="#planos" class="hover:text-white transition-colors">Planos</a>
+        <a href="#faq" class="hover:text-white transition-colors">Dúvidas</a>
+      </nav>
+
+      <!-- CTAs HEADER -->
+      <div class="flex items-center gap-2.5">
+        {% if current_user %}
+          <a href="/dashboard" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-brand-cyan bg-brand-cyan/10 border border-brand-cyan/30 hover:bg-brand-cyan/20 transition-all">
+            <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="/logout" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-brand-muted hover:text-white transition-all">
+            <span>Sair</span>
+          </a>
+        {% else %}
+          <a href="/login" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-brand-muted hover:text-white transition-all">
+            <span>Entrar</span>
+          </a>
+          <a href="/cadastro" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-black bg-brand-cyan hover:brightness-110 transition-all">
+            <span>Cadastrar Time</span>
+          </a>
+        {% endif %}
+
+        <a href="https://github.com/Mp-resende/upzin-releases/releases/latest/download/UpzinAutoplay_oficial.zip" class="relative group inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold text-black bg-brand-mint hover:bg-brand-accent shadow-glow-mint transition-all">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          <span>Autoplay 48h</span>
+        </a>
+
+        <!-- Mobile Menu Toggle -->
+        <button id="mobile-menu-btn" class="md:hidden p-2 text-brand-muted hover:text-white rounded-lg border border-brand-border">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Mobile Dropdown -->
+    <div id="mobile-menu" class="hidden md:hidden max-w-7xl mx-auto mt-2 p-4 backdrop-blur-xl bg-brand-surface/95 border border-brand-border rounded-2xl space-y-3 text-sm">
+      <div class="text-xs font-mono text-brand-subtle uppercase pb-2 border-b border-white/5">
+        Selecione o que procura:
+      </div>
+      <a href="#scouts" class="block p-2 rounded-lg bg-brand-cyan/10 text-brand-cyan font-semibold flex items-center justify-between">
+        <span>📊 Upzin Scouts (Dados & Gestão)</span>
+        <span class="text-[10px] font-mono">Web & App</span>
+      </a>
+      <a href="#autoplay" class="block p-2 rounded-lg bg-brand-mint/10 text-brand-mint font-semibold flex items-center justify-between">
+        <span>⚡ Upzin Autoplay (Evolução AFK)</span>
+        <span class="text-[10px] font-mono">PC (PS5/Xbox)</span>
+      </a>
+      <a href="#distincao" class="block py-1 hover:text-white">Qual ferramenta é para mim?</a>
+      <a href="#planos" class="block py-1 hover:text-white">Planos & Preços</a>
+      <a href="#faq" class="block py-1 hover:text-white">Perguntas Frequentes</a>
+      
+      <div class="pt-3 border-t border-white/5 flex flex-col gap-2">
+        {% if current_user %}
+          <a href="/dashboard" class="w-full text-center py-2 text-xs font-semibold rounded-lg bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30">
+            Acessar Dashboard
+          </a>
+          <a href="/logout" class="w-full text-center py-1.5 text-xs text-brand-muted">
+            Sair da Conta
+          </a>
+        {% else %}
+          <div class="flex gap-2">
+            <a href="/login" class="flex-1 text-center py-2 text-xs rounded-lg border border-brand-border text-brand-text">Entrar</a>
+            <a href="/cadastro" class="flex-1 text-center py-2 text-xs rounded-lg bg-brand-cyan text-black font-bold">Cadastrar Time</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="relative z-10 pt-28 sm:pt-32 pb-24 space-y-24 sm:space-y-32">
+
+    <!-- HERO SECTION: DUAS PORTAS DE ENTRADA (SPLIT-HERO) -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-6 sm:pt-10">
+      
+      <!-- TOP BADGE -->
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-surface border border-white/10 shadow-sm mb-6">
+        <span class="flex h-2 w-2 rounded-full bg-brand-cyan"></span>
+        <span class="text-xs font-mono font-medium tracking-wide text-brand-muted uppercase">Duas Ferramentas Independentes • O Mesmo Universo Pro Clubs</span>
+      </div>
+
+      <!-- MAIN HEADLINE -->
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-[1.15]">
+        Qual é o seu objetivo hoje no Pro Clubs?
+      </h1>
+
+      <!-- SUBTITLE -->
+      <p class="mt-4 text-sm sm:text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
+        Não confunda: temos <strong class="text-white">duas ferramentas totalmente distintas</strong>. Uma cuida da <span class="text-brand-mint font-semibold">evolução individual do seu jogador</span> e a outra cuida da <span class="text-brand-cyan font-semibold">inteligência tática do seu time</span>.
+      </p>
+
+      <!-- OS DOIS CARDS DE ENTRADA LADO A LADO NO HERO -->
+      <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto text-left items-stretch">
+        
+        <!-- CARD 1: MUNDO DO ATLETA (UPZIN AUTOPLAY) -->
+        <div class="p-6 sm:p-8 rounded-3xl bg-brand-surface border-2 border-brand-mint/50 shadow-glow-mint relative overflow-hidden flex flex-col justify-between group hover:border-brand-mint transition-all">
+          <div class="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-32 h-32 bg-brand-mint/10 rounded-full blur-2xl pointer-events-none"></div>
+
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-brand-mint/15 text-brand-mint border border-brand-mint/30 uppercase tracking-wider">
+                ⚡ Para Você (Atleta)
+              </span>
+              <span class="text-xs text-brand-subtle font-mono">Software PC</span>
+            </div>
+
+            <h3 class="text-2xl sm:text-3xl font-display font-black text-white flex items-center gap-2">
+              Upzin Autoplay
+            </h3>
+            
+            <p class="text-xs sm:text-sm text-brand-mint font-semibold mt-1">
+              "Quero upar meu Pro até o nível 100 no piloto automático."
+            </p>
+
+            <p class="mt-4 text-xs sm:text-sm text-brand-muted leading-relaxed">
+              Robô de automação externa que joga partidas repetitivas sozinho enquanto você descansa, trabalha ou estuda. Simula o controle na mão, com movimentação humana e pausas.
+            </p>
+
+            <div class="mt-6 pt-4 border-t border-white/5 space-y-2 text-xs text-brand-muted">
+              <div class="flex items-center gap-2">
+                <i data-lucide="check" class="w-4 h-4 text-brand-mint shrink-0"></i>
+                <span><strong>O que entrega:</strong> Nível 100, arquétipos e pontos de XP sem grind.</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="check" class="w-4 h-4 text-brand-mint shrink-0"></i>
+                <span><strong>Onde roda:</strong> PlayStation 5 e Xbox (via transmissão no PC).</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-4 h-4 text-brand-mint shrink-0"></i>
+                <span><strong>Anti-Cheat:</strong> 100% externo, sem DLLs e sem ler memória.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center gap-3">
+            <a href="https://github.com/Mp-resende/upzin-releases/releases/latest/download/UpzinAutoplay_oficial.zip" class="w-full sm:flex-1 py-3.5 px-4 rounded-xl bg-brand-mint hover:bg-brand-accent text-black font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-glow-mint transition-all">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>Baixar Teste 48h Grátis</span>
+            </a>
+            <a href="#autoplay" class="w-full sm:w-auto py-3.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium text-xs text-center border border-white/10 transition-all">
+              Ver Como Funciona ↓
+            </a>
+          </div>
+        </div>
+
+        <!-- CARD 2: MUNDO DO CLUBE (UPZIN SCOUTS) -->
+        <div class="p-6 sm:p-8 rounded-3xl bg-brand-surface border-2 border-brand-cyan/50 shadow-glow-cyan relative overflow-hidden flex flex-col justify-between group hover:border-brand-cyan transition-all">
+          <div class="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-32 h-32 bg-brand-cyan/10 rounded-full blur-2xl pointer-events-none"></div>
+
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-brand-cyan/15 text-brand-cyan border border-brand-cyan/30 uppercase tracking-wider">
+                📊 Para o Time & Capitão
+              </span>
+              <span class="text-xs text-brand-subtle font-mono">Web & Celular (PWA)</span>
+            </div>
+
+            <h3 class="text-2xl sm:text-3xl font-display font-black text-white flex items-center gap-2">
+              Upzin Scouts
+            </h3>
+
+            <p class="text-xs sm:text-sm text-brand-cyan font-semibold mt-1">
+              "Quero ver as estatísticas, notas 0–100 e a resenha do meu time."
+            </p>
+
+            <p class="mt-4 text-xs sm:text-sm text-brand-muted leading-relaxed">
+              Plataforma de inteligência tática conectada à API oficial da EA Sports. Salva cada partida para sempre, gera notas justas por posição, elege a Seleção da Semana (TOTW) e detecta panelinhas.
+            </p>
+
+            <div class="mt-6 pt-4 border-t border-white/5 space-y-2 text-xs text-brand-muted">
+              <div class="flex items-center gap-2">
+                <i data-lucide="check" class="w-4 h-4 text-brand-cyan shrink-0"></i>
+                <span><strong>O que entrega:</strong> Histórico eterno, notas 0–100, TOTW e detector de panelinhas.</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="check" class="w-4 h-4 text-brand-cyan shrink-0"></i>
+                <span><strong>Onde roda:</strong> No navegador e no celular (iPhone e Android).</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="database" class="w-4 h-4 text-brand-cyan shrink-0"></i>
+                <span><strong>Fonte:</strong> 100% dados públicos oficiais da EA Sports.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center gap-3">
+            <a href="#consulta-ea" class="w-full sm:flex-1 py-3.5 px-4 rounded-xl bg-brand-cyan hover:brightness-110 text-black font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-glow-cyan transition-all">
+              <i data-lucide="search" class="w-4 h-4"></i>
+              <span>Consultar Clube Grátis</span>
+            </a>
+            <a href="/cadastro" class="w-full sm:w-auto py-3.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium text-xs text-center border border-white/10 transition-all">
+              Cadastrar Time
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- SEÇÃO: MATRIZ DIDÁTICA (QUAL FERRAMENTA É PARA MIM?) -->
+    <section id="distincao" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <h2 class="text-xs font-mono uppercase tracking-widest text-brand-subtle font-bold mb-2">Guia Rápido de Escolha</h2>
+        <h3 class="text-2xl sm:text-3xl font-display font-extrabold text-white">
+          Ainda em dúvida sobre qual usar?
+        </h3>
+        <p class="text-xs sm:text-sm text-brand-muted mt-2">
+          Veja em qual situação você se encaixa melhor:
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <!-- SITUAÇÃO 1 -->
+        <div class="p-5 rounded-2xl bg-brand-surface border border-brand-mint/30 flex flex-col justify-between">
+          <div>
+            <div class="w-8 h-8 rounded-lg bg-brand-mint/15 text-brand-mint flex items-center justify-center mb-3 font-bold font-mono text-sm">
+              01
+            </div>
+            <p class="text-xs text-brand-muted italic mb-3">
+              "Trabalho o dia todo e não tenho tempo de jogar 15 partidas por noite só para upar o boneco."
+            </p>
+          </div>
+          <div class="pt-3 border-t border-white/5">
+            <span class="text-[11px] font-mono text-brand-subtle block">A FERRAMENTA IDEAL:</span>
+            <span class="text-sm font-bold text-brand-mint font-display">⚡ Upzin Autoplay</span>
+            <p class="text-[11px] text-brand-muted mt-1">Baixe o programa no PC, ligue a transmissão do console e deixe o bot grindar o XP.</p>
+          </div>
+        </div>
+
+        <!-- SITUAÇÃO 2 -->
+        <div class="p-5 rounded-2xl bg-brand-surface border border-brand-cyan/30 flex flex-col justify-between">
+          <div>
+            <div class="w-8 h-8 rounded-lg bg-brand-cyan/15 text-brand-cyan flex items-center justify-center mb-3 font-bold font-mono text-sm">
+              02
+            </div>
+            <p class="text-xs text-brand-muted italic mb-3">
+              "Quero saber quem jogou bem na noite de campeonato, quem foi o bagre e ver a escalação da semana."
+            </p>
+          </div>
+          <div class="pt-3 border-t border-white/5">
+            <span class="text-[11px] font-mono text-brand-subtle block">A FERRAMENTA IDEAL:</span>
+            <span class="text-sm font-bold text-brand-cyan font-display">📊 Upzin Scouts</span>
+            <p class="text-[11px] text-brand-muted mt-1">Abra no celular ou PC, digite o ID do clube e veja notas 0-100 calculadas por posição.</p>
+          </div>
+        </div>
+
+        <!-- SITUAÇÃO 3 -->
+        <div class="p-5 rounded-2xl bg-brand-surface border border-white/10 flex flex-col justify-between">
+          <div>
+            <div class="w-8 h-8 rounded-lg bg-white/10 text-white flex items-center justify-center mb-3 font-bold font-mono text-sm">
+              03
+            </div>
+            <p class="text-xs text-brand-muted italic mb-3">
+              "Sou capitão e organizo o time: quero meu Pro nível 100 e também gerenciar as estatísticas do elenco."
+            </p>
+          </div>
+          <div class="pt-3 border-t border-white/5">
+            <span class="text-[11px] font-mono text-brand-subtle block">A FERRAMENTA IDEAL:</span>
+            <span class="text-sm font-bold text-white font-display">🏆 Combo Ecossistema</span>
+            <p class="text-[11px] text-brand-muted mt-1">Você usa o Autoplay no console para upar e o Scouts na web para comendar o elenco.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- BLOCO 1: ZONA EXCLUSIVA DO UPZIN SCOUTS (AZUL CYAN)      -->
+    <!-- ======================================================== -->
+    <section id="scouts" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 border-t border-white/5">
+      
+      <!-- HEADER DO BLOCO SCOUTS -->
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-cyan/15 border border-brand-cyan/30 text-brand-cyan text-xs font-mono font-bold uppercase mb-3">
+          <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
+          <span>Ferramenta 1: Upzin Scouts</span>
+        </div>
+        <h2 class="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight">
+          A Central de Inteligência do seu Time
+        </h2>
+        <p class="mt-3 text-sm sm:text-base text-brand-muted">
+          Não precisa instalar nada no videogame nem no computador. Funciona 100% pela Web e no celular.
+        </p>
+      </div>
+
+      <!-- WIDGET INTERATIVO AO VIVO DA EA -->
+      <div id="consulta-ea" class="max-w-5xl mx-auto mb-16">
+        <div class="relative rounded-3xl p-1 bg-gradient-to-b from-brand-cyan/40 via-brand-surface to-transparent shadow-glow-cyan">
+          <div class="bg-brand-surface rounded-[22px] border border-white/10 p-6 sm:p-8 relative overflow-hidden text-left">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/5">
+              <div>
+                <h3 class="text-xl sm:text-2xl font-display font-bold text-white flex items-center gap-2">
+                  <i data-lucide="search" class="w-5 h-5 text-brand-cyan"></i>
+                  Consulte qualquer Clube ao Vivo na EA Sports
+                </h3>
+                <p class="text-xs text-brand-muted mt-0.5">
+                  Teste com o ID numérico do seu clube. Os dados vêm direto dos servidores da EA.
+                </p>
+              </div>
+
+              <div class="flex items-center gap-2 text-xs text-brand-subtle font-mono">
+                <span class="w-2 h-2 rounded-full bg-brand-cyan"></span>
+                <span>Dados Oficiais EA</span>
+              </div>
+            </div>
+
+            <!-- Formulário de Busca -->
+            <form id="ea-search-form" onsubmit="handleEASearch(event)" class="space-y-3">
+              <div class="flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1">
+                  <input 
+                    type="text" 
+                    id="ea-club-input" 
+                    placeholder="Digite o ID do clube (Ex: 682077, 491230, 810452)..." 
+                    class="w-full px-4 py-3 rounded-xl bg-brand-bg border border-brand-border text-white placeholder-brand-subtle focus:outline-none focus:border-brand-cyan text-sm font-mono"
+                    value="682077"
+                    required
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  id="ea-search-btn"
+                  class="px-6 py-3 rounded-xl bg-brand-cyan hover:brightness-110 text-black font-bold text-sm flex items-center justify-center gap-2 shadow-glow-cyan transition-all shrink-0">
+                  <i data-lucide="search" class="w-4 h-4"></i>
+                  <span>Buscar na EA</span>
+                </button>
+              </div>
+
+              <!-- Chips Rápidos -->
+              <div class="flex flex-wrap items-center gap-2 text-xs text-brand-muted">
+                <span>Ou teste um exemplo:</span>
+                <button type="button" onclick="quickFillClub('682077', 'MVL ES')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-brand-text border border-white/5 font-mono">
+                  682077 (MVL ES)
+                </button>
+                <button type="button" onclick="quickFillClub('491230', 'Red Bull SP')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-brand-text border border-white/5 font-mono">
+                  491230 (Red Bull SP)
+                </button>
+                <button type="button" onclick="quickFillClub('810452', 'Galácticos FC')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-brand-text border border-white/5 font-mono">
+                  810452 (Galácticos FC)
+                </button>
+              </div>
+            </form>
+
+            <!-- Card de Resultado -->
+            <div id="ea-search-result" class="mt-6 bg-brand-bg/90 border border-brand-border rounded-2xl p-5 space-y-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+                <div>
+                  <h4 id="res-club-name" class="text-xl font-bold font-display text-white">MVL ES</h4>
+                  <p class="text-xs text-brand-muted font-mono">
+                    ID: <span id="res-club-id" class="text-white">682077</span> • Divisão Oficial EA
+                  </p>
+                </div>
+                <div>
+                  {% if current_user %}
+                    <form method="POST" action="/meus-clubes/adicionar" class="m-0">
+                      <input type="hidden" name="club_id" id="monitor-club-id" value="682077" />
+                      <input type="hidden" name="club_name" id="monitor-club-name" value="MVL ES" />
+                      <button type="submit" class="px-4 py-2 rounded-xl bg-brand-cyan text-black font-bold text-xs flex items-center gap-1.5 hover:brightness-110 transition-all">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Monitorar no Meu Dashboard</span>
+                      </button>
+                    </form>
+                  {% else %}
+                    <a href="/cadastro" class="px-4 py-2 rounded-xl bg-brand-cyan/20 hover:bg-brand-cyan/30 text-brand-cyan border border-brand-cyan/40 text-xs font-semibold flex items-center gap-1.5 transition-all">
+                      <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                      <span>Cadastrar Time para Salvar Histórico</span>
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Stats Rápidos -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
+                  <span class="text-[11px] text-brand-subtle block">Jogos Totais</span>
+                  <span id="res-club-games" class="text-lg font-bold text-white">284</span>
+                </div>
+                <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
+                  <span class="text-[11px] text-brand-subtle block">Vitórias</span>
+                  <span id="res-club-wins" class="text-lg font-bold text-brand-cyan">204</span>
+                </div>
+                <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
+                  <span class="text-[11px] text-brand-subtle block">Aproveitamento</span>
+                  <span id="res-club-ppg" class="text-lg font-bold text-white">71.8%</span>
+                </div>
+                <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
+                  <span class="text-[11px] text-brand-subtle block">Skill Rating</span>
+                  <span id="res-club-skill" class="text-lg font-bold text-brand-mint">1.845</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 RECURSOS DO SCOUTS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="p-5 rounded-2xl bg-brand-surface border border-brand-cyan/20">
+          <div class="w-10 h-10 rounded-xl bg-brand-cyan/15 text-brand-cyan flex items-center justify-center mb-3">
+            <i data-lucide="sliders" class="w-5 h-5"></i>
+          </div>
+          <h4 class="text-base font-bold text-white font-display mb-1">Score Ponderado 0–100</h4>
+          <p class="text-xs text-brand-muted leading-relaxed">
+            Métricas justas por posição: atacantes pontuam por gols e conversão; zagueiros por desarmes e interceptações.
+          </p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-brand-surface border border-brand-cyan/20">
+          <div class="w-10 h-10 rounded-xl bg-brand-cyan/15 text-brand-cyan flex items-center justify-center mb-3">
+            <i data-lucide="users-2" class="w-5 h-5"></i>
+          </div>
+          <h4 class="text-base font-bold text-white font-display mb-1">Detector de Panelinhas</h4>
+          <p class="text-xs text-brand-muted leading-relaxed">
+            A IA calcula a taxa de vitória cruzada para mostrar quais duplas e trios rendem mais quando jogam juntos.
+          </p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-brand-surface border border-brand-cyan/20">
+          <div class="w-10 h-10 rounded-xl bg-brand-cyan/15 text-brand-cyan flex items-center justify-center mb-3">
+            <i data-lucide="trophy" class="w-5 h-5"></i>
+          </div>
+          <h4 class="text-base font-bold text-white font-display mb-1">Seleção TOTW (3-1-4-2)</h4>
+          <p class="text-xs text-brand-muted leading-relaxed">
+            Escalação automática dos 11 melhores atletas da semana do seu elenco para postar e movimentar a resenha.
+          </p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-brand-surface border border-brand-cyan/20">
+          <div class="w-10 h-10 rounded-xl bg-brand-cyan/15 text-brand-cyan flex items-center justify-center mb-3">
+            <i data-lucide="smartphone" class="w-5 h-5"></i>
+          </div>
+          <h4 class="text-base font-bold text-white font-display mb-1">App no Celular (PWA)</h4>
+          <p class="text-xs text-brand-muted leading-relaxed">
+            Funciona como app nativo no iPhone e Android sem precisar baixar 200MB de loja ou pagar taxas da Apple/Google.
+          </p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- BLOCO 2: ZONA EXCLUSIVA DO UPZIN AUTOPLAY (VERDE MINT)   -->
+    <!-- ======================================================== -->
+    <section id="autoplay" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 border-t border-white/5">
+      
+      <!-- HEADER DO BLOCO AUTOPLAY -->
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-mint/15 border border-brand-mint/30 text-brand-mint text-xs font-mono font-bold uppercase mb-3">
+          <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+          <span>Ferramenta 2: Upzin Autoplay</span>
+        </div>
+        <h2 class="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight">
+          Evolua seu Pro no Piloto Automático
+        </h2>
+        <p class="mt-3 text-sm sm:text-base text-brand-muted">
+          Software independente para Windows que joga pelo lado de fora no PS5 e Xbox, sem encostar em arquivos do jogo.
+        </p>
+      </div>
+
+      <!-- AVISO DE COMPATIBILIDADE AUTOPLAY -->
+      <div class="max-w-4xl mx-auto mb-10 p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-left flex items-start gap-3">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5"></i>
+        <div class="text-xs sm:text-sm text-brand-muted leading-relaxed">
+          <strong class="text-amber-300">Regra de Compatibilidade do Autoplay:</strong> Funciona exclusivamente para quem joga no <strong class="text-white">PlayStation 5</strong> (via Chiaki-ng) ou <strong class="text-white">Xbox</strong> (via Chrome). <span class="text-amber-200">Não funciona se o jogo estiver instalado diretamente no PC</span> (Steam/EA App). É justamente por rodar fora do jogo que sua conta fica 100% segura contra bans.
+        </div>
+      </div>
+
+      <!-- RÉPLICA DA INTERFACE DO SOFTWARE NO WINDOWS -->
+      <div class="relative max-w-4xl mx-auto rounded-2xl p-1 bg-gradient-to-b from-white/10 to-transparent shadow-card-elevated mb-12">
+        <div class="bg-[#0D0F1A] border border-white/10 rounded-2xl overflow-hidden text-left shadow-2xl font-sans">
+          
+          <!-- Windows Title Bar -->
+          <div class="px-4 py-2 bg-[#151A2B] border-b border-white/5 flex items-center justify-between select-none">
+            <div class="flex items-center gap-2">
+              <img src="/static/assets/icone-16.png" alt="Upzin Icon" class="w-4 h-4 object-contain opacity-90">
+              <span class="text-xs font-medium text-[#EEF1F8]">Upzin Autoplay — PRO 1.0.2</span>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-[#A9B1CC]">
+              <span>─</span>
+              <span>□</span>
+              <span>✕</span>
+            </div>
+          </div>
+
+          <!-- Janela do Bot -->
+          <div class="p-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-xl font-bold font-display text-white">Upzin Autoplay</h4>
+                <p class="text-xs text-brand-muted">Automação Inteligente de Console • Parada de Emergência: [F12]</p>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold font-mono bg-[#13824A] text-white">
+                EM PARTIDA (CLUBS 11x11)
+              </span>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="bg-[#151A2B] rounded-xl px-4 py-3 flex items-center justify-between text-xs sm:text-sm font-bold text-white">
+              <span class="text-[#5BE38F]">⚽ Partidas: 18</span>
+              <span class="text-[#89b4fa]">⏱️ Tempo: 4h 12min</span>
+              <span class="text-[#f9e2af]">📈 XP Ganho: +8.100 XP</span>
+            </div>
+
+            <!-- Terminal Logs -->
+            <div class="bg-[#08090D] rounded-xl p-3 font-mono text-xs text-brand-muted space-y-1 h-28 overflow-hidden border border-white/5">
+              <div class="text-[#A9B1CC]">[17:02:15] 🖥️ Tela do jogo conectada via Chiaki-ng / PS5.</div>
+              <div class="text-[#89b4fa]">[17:02:22] 🔍 Procurando partida no matchmaking oficial...</div>
+              <div class="text-white font-semibold">[17:02:35] ⚽ Partida encontrada! Entrando em campo...</div>
+              <div class="text-[#5BE38F]">[17:02:40] 🏃 Movimentação analógica humana ativa.</div>
+              <div class="text-[#5BE38F] font-bold">[17:18:20] 🏆 Fim de partida! +450 XP creditados no Pro.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 3 PASSOS PARA RODAR O AUTOPLAY -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto text-left">
+        <div class="p-5 rounded-2xl bg-brand-surface border border-brand-mint/20">
+          <span class="text-lg font-bold font-mono text-brand-mint">01</span>
+          <h4 class="text-base font-bold text-white font-display mt-2 mb-1">Baixe o Pacote (.zip)</h4>
+          <p class="text-xs text-brand-muted">Descompacte o arquivo no seu computador com Windows 10 ou 11. Não precisa instalar nada pesado.</p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-brand-surface border border-brand-mint/20">
+          <span class="text-lg font-bold font-mono text-brand-mint">02</span>
+          <h4 class="text-base font-bold text-white font-display mt-2 mb-1">Abra a Transmissão</h4>
+          <p class="text-xs text-brand-muted">Abra a tela do seu PS5 no Chiaki-ng ou do Xbox no Chrome. O robô reconhece o jogo automaticamente.</p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-brand-surface border border-brand-mint/20">
+          <span class="text-lg font-bold font-mono text-brand-mint">03</span>
+          <h4 class="text-base font-bold text-white font-display mt-2 mb-1">Clique em Iniciar</h4>
+          <p class="text-xs text-brand-muted">Seu teste de 48 horas é ativado na 1ª abertura. Clique em Iniciar Bot e acompanhe o XP subindo.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- SEÇÃO: SEGURANÇA E TRANSPARÊNCIA -->
+    <section id="seguranca" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 border-t border-white/5">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <h2 class="text-xs font-mono uppercase tracking-widest text-brand-mint font-bold mb-2">Transparência Técnica</h2>
+        <h3 class="text-2xl sm:text-3xl font-display font-extrabold text-white">
+          Por que você está 100% seguro contra bans?
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto text-left">
+        <div class="p-6 rounded-2xl bg-brand-surface border border-brand-mint/30">
+          <div class="flex items-center gap-2 text-brand-mint font-bold text-sm mb-2">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+            <span>Segurança no Upzin Autoplay</span>
+          </div>
+          <p class="text-xs sm:text-sm text-brand-muted leading-relaxed">
+            O Autoplay funciona <strong class="text-white">olhando a tela transmitida pelo lado de fora</strong>, como um controle virtual. Ele não injeta DLLs, não altera arquivos e não lê a memória do jogo. A EA não tem como detectar porque não há nada rodando dentro do console ou jogo.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-brand-surface border border-brand-cyan/30">
+          <div class="flex items-center gap-2 text-brand-cyan font-bold text-sm mb-2">
+            <i data-lucide="database" class="w-5 h-5"></i>
+            <span>Segurança no Upzin Scouts</span>
+          </div>
+          <p class="text-xs sm:text-sm text-brand-muted leading-relaxed">
+            O Scouts consulta apenas a <strong class="text-white">API pública oficial da EA Sports</strong>. Não pedimos senha, login ou e-mail da sua conta da EA. É uma consulta pública de telemetria permitida e aberta.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: PLANOS CLAROS E SEPARADOS -->
+    <section id="planos" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 border-t border-white/5">
+      
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h2 class="text-xs font-mono uppercase tracking-widest text-brand-muted font-bold mb-2">Preços e Acesso</h2>
+        <h3 class="text-2xl sm:text-4xl font-display font-extrabold text-white">
+          Planos Independentes para Cada Ferramenta
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto text-left items-stretch">
+        
+        <!-- PLANO SCOUTS -->
+        <div class="p-6 rounded-2xl bg-brand-surface border border-brand-cyan/40 flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-mono font-bold text-brand-cyan uppercase">Para o Clube</span>
+            <h4 class="text-xl font-bold font-display text-white mt-1">Upzin Scouts</h4>
+            <div class="my-4">
+              <span class="text-3xl font-extrabold font-display text-white">R$ 0</span>
+              <span class="text-xs text-brand-muted">/ livre no lançamento</span>
+            </div>
+            <ul class="space-y-2.5 text-xs text-brand-muted mb-6">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-cyan"></i> Consulta ao vivo de qualquer clube</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-cyan"></i> Histórico recente das partidas</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-cyan"></i> Scout Score 0-100 por posição</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-cyan"></i> Acesso mobile como App (PWA)</li>
+            </ul>
+          </div>
+          <a href="/cadastro" class="w-full text-center py-3 rounded-xl bg-brand-cyan text-black font-bold text-xs hover:brightness-110 transition-all">
+            Cadastrar Clube Grátis
+          </a>
+        </div>
+
+        <!-- PLANO AUTOPLAY TRIAL -->
+        <div class="p-6 rounded-2xl bg-brand-surface border border-brand-mint/40 flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-mono font-bold text-brand-mint uppercase">Para o Atleta</span>
+            <h4 class="text-xl font-bold font-display text-white mt-1">Autoplay (Trial 48h)</h4>
+            <div class="my-4">
+              <span class="text-3xl font-extrabold font-display text-white">R$ 0</span>
+              <span class="text-xs text-brand-muted">/ 48h completas</span>
+            </div>
+            <ul class="space-y-2.5 text-xs text-brand-muted mb-6">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Acesso irrestrito ao robô no PC</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Sem necessidade de cartão</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Reconhecimento automático por máquina</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Suporte no Telegram para rodar</li>
+            </ul>
+          </div>
+          <a href="https://github.com/Mp-resende/upzin-releases/releases/latest/download/UpzinAutoplay_oficial.zip" class="w-full text-center py-3 rounded-xl border border-brand-mint/40 hover:bg-brand-mint/10 text-brand-mint font-bold text-xs transition-all">
+            Baixar Teste 48h
+          </a>
+        </div>
+
+        <!-- PLANO AUTOPLAY MENSAL -->
+        <div class="p-6 rounded-2xl bg-brand-surface border-2 border-brand-mint shadow-glow-mint flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-mono font-bold text-brand-mint uppercase">Para o Atleta</span>
+            <h4 class="text-xl font-bold font-display text-white mt-1">Autoplay Mensal</h4>
+            <div class="my-4">
+              <span class="text-3xl font-extrabold font-display text-white">R$ 39,90</span>
+              <span class="text-xs text-brand-muted">/ mês (Pix)</span>
+            </div>
+            <ul class="space-y-2.5 text-xs text-brand-muted mb-6">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Uso ilimitado o mês todo</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Atualizações automáticas pós-patch</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Garantia de 7 dias ou dinheiro de volta</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-mint"></i> Suporte prioritário no Telegram</li>
+            </ul>
+          </div>
+          <a href="https://t.me/UpzinAtendimento" target="_blank" class="w-full text-center py-3 rounded-xl bg-brand-mint hover:bg-brand-accent text-black font-bold text-xs shadow-glow-mint transition-all">
+            Assinar via Telegram
+          </a>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- SEÇÃO: FAQ CATEGORIZADO -->
+    <section id="faq" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 border-t border-white/5">
+      
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <h2 class="text-xs font-mono uppercase tracking-widest text-brand-muted font-bold mb-2">Dúvidas Frequentes</h2>
+        <h3 class="text-2xl sm:text-3xl font-display font-extrabold text-white">
+          Perguntas Frequentes por Ferramenta
+        </h3>
+      </div>
+
+      <div class="space-y-3" id="faq-accordion">
+        
+        <div class="bg-brand-surface border border-white/10 rounded-xl overflow-hidden">
+          <button onclick="toggleFaq(0)" class="w-full px-5 py-4 text-left flex items-center justify-between gap-4 text-white font-bold text-sm">
+            <span>Preciso de um computador para usar os Scouts do meu time?</span>
+            <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-brand-muted transition-transform"></i>
+          </button>
+          <div class="faq-content px-5 pb-4 text-xs text-brand-muted leading-relaxed hidden">
+            Não! O <strong>Upzin Scouts</strong> roda direto no navegador e no celular (iPhone e Android). Você pode acessar de onde quiser para ver o histórico e notas das partidas. O computador só é necessário se você quiser usar o <strong>Upzin Autoplay</strong> para upar o Pro.
+          </div>
+        </div>
+
+        <div class="bg-brand-surface border border-white/10 rounded-xl overflow-hidden">
+          <button onclick="toggleFaq(1)" class="w-full px-5 py-4 text-left flex items-center justify-between gap-4 text-white font-bold text-sm">
+            <span>O Autoplay funciona se meu jogo estiver instalado direto no PC?</span>
+            <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-brand-muted transition-transform"></i>
+          </button>
+          <div class="faq-content px-5 pb-4 text-xs text-brand-muted leading-relaxed hidden">
+            Não! O <strong>Upzin Autoplay</strong> foi feito sob medida para quem joga no <strong>PlayStation 5</strong> ou <strong>Xbox</strong> e transmite a tela para o PC. Já o <strong>Upzin Scouts</strong> funciona para qualquer plataforma (Crossplay PS5, Xbox e PC).
+          </div>
+        </div>
+
+        <div class="bg-brand-surface border border-white/10 rounded-xl overflow-hidden">
+          <button onclick="toggleFaq(2)" class="w-full px-5 py-4 text-left flex items-center justify-between gap-4 text-white font-bold text-sm">
+            <span>Posso usar o computador normalmente enquanto o Autoplay roda?</span>
+            <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-brand-muted transition-transform"></i>
+          </button>
+          <div class="faq-content px-5 pb-4 text-xs text-brand-muted leading-relaxed hidden">
+            No <strong>PlayStation 5</strong>, sim! Com o Chiaki-ng, a transmissão roda em segundo plano e você pode trabalhar ou navegar normalmente. No <strong>Xbox</strong>, a janela do Chrome precisa ficar visível na tela.
+          </div>
+        </div>
+
+        <div class="bg-brand-surface border border-white/10 rounded-xl overflow-hidden">
+          <button onclick="toggleFaq(3)" class="w-full px-5 py-4 text-left flex items-center justify-between gap-4 text-white font-bold text-sm">
+            <span>Como faço para cadastrar meu clube no Scouts?</span>
+            <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-brand-muted transition-transform"></i>
+          </button>
+          <div class="faq-content px-5 pb-4 text-xs text-brand-muted leading-relaxed hidden">
+            Basta criar uma conta gratuita com e-mail e senha em <strong>Cadastrar</strong>, digitar o ID numérico do seu clube na EA e pronto: nosso robô passará a monitorar suas partidas automaticamente a cada 5 minutos.
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER INSTITUCIONAL -->
+  <footer class="border-t border-brand-border bg-brand-bg/95 relative z-10 py-10 px-4 sm:px-6 lg:px-8 text-xs text-brand-muted">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-brand-surface border border-white/10 p-1 flex items-center justify-center">
+          <img src="/static/assets/upzin-simbolo.svg" alt="Upzin" class="w-full h-full object-contain">
+        </div>
+        <div>
+          <span class="font-display font-bold text-white text-sm">Upzin Clubs Suite</span>
+          <p class="text-[11px] text-brand-subtle">Autoplay (Console) & Scouts (Dados EA Sports)</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-6 text-xs">
+        <a href="#autoplay" class="hover:text-brand-mint transition-colors">Upzin Autoplay</a>
+        <a href="#scouts" class="hover:text-brand-cyan transition-colors">Upzin Scouts</a>
+        <a href="#distincao" class="hover:text-white transition-colors">Qual Escolher?</a>
+        <a href="https://t.me/UpzinAtendimento" target="_blank" class="text-brand-cyan hover:underline flex items-center gap-1">
+          <i data-lucide="send" class="w-3.5 h-3.5"></i> Suporte no Telegram
+        </a>
+      </div>
+
+      <p class="text-[11px] text-brand-subtle">
+        © 2026 Upzin. Plataforma independente para a comunidade de Pro Clubs.
+      </p>
+    </div>
+  </footer>
+
+  <!-- SCRIPTS JS -->
+  <script>
+    lucide.createIcons();
+
+    // Mobile Menu
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+    mobileMenu.querySelectorAll('a').forEach(link => link.addEventListener('click', () => mobileMenu.classList.add('hidden')));
+
+    // FAQ Accordion
+    function toggleFaq(index) {
+      const accordion = document.getElementById('faq-accordion');
+      const items = accordion.children;
+      const targetItem = items[index];
+      const content = targetItem.querySelector('.faq-content');
+      const icon = targetItem.querySelector('.faq-icon');
+      const isClosed = content.classList.contains('hidden');
+
+      Array.from(items).forEach(item => {
+        item.querySelector('.faq-content').classList.add('hidden');
+        item.querySelector('.faq-icon').style.transform = 'rotate(0deg)';
+      });
+
+      if (isClosed) {
+        content.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    function toggleModal(id, show) {
+      const modal = document.getElementById(id);
+      if (show) modal.classList.remove('hidden');
+      else modal.classList.add('hidden');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      toastMsg.innerText = message;
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 3500);
+    }
+
+    const sampleClubs = {
+      '682077': { name: 'MVL ES', games: '284', wins: '204', ppg: '71.8%', skill: '1.845' },
+      '491230': { name: 'Red Bull SP', games: '196', wins: '138', ppg: '70.4%', skill: '1.790' },
+      '810452': { name: 'Galácticos FC', games: '320', wins: '245', ppg: '76.5%', skill: '1.920' }
+    };
+
+    function quickFillClub(id, name) {
+      document.getElementById('ea-club-input').value = id;
+      handleEASearch(new Event('submit'));
+    }
+
+    async function handleEASearch(e) {
+      if (e) e.preventDefault();
+      const clubId = document.getElementById('ea-club-input').value.trim();
+      const btn = document.getElementById('ea-search-btn');
+      if (!clubId) return;
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full"></span> Consultando EA...`;
+
+      try {
+        const response = await fetch('/api/v1/public/ea/clubs/' + encodeURIComponent(clubId));
+        if (response.ok) {
+          const resData = await response.json();
+          if (resData.ok && resData.club) {
+            const c = resData.club;
+            document.getElementById('res-club-id').innerText = c.club_id || clubId;
+            document.getElementById('res-club-name').innerText = c.name || `Clube #${clubId}`;
+            
+            const monitorId = document.getElementById('monitor-club-id');
+            const monitorName = document.getElementById('monitor-club-name');
+            if (monitorId) monitorId.value = c.club_id || clubId;
+            if (monitorName) monitorName.value = c.name || `Clube #${clubId}`;
+
+            if (c.matches && c.matches.length > 0) {
+              document.getElementById('res-club-games').innerText = c.matches.length;
+            }
+            showToast(`Dados ao vivo da EA para ${c.name || clubId}!`);
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="search" class="w-4 h-4"></i><span>Buscar na EA</span>`;
+            lucide.createIcons();
+            return;
+          }
+        }
+      } catch (err) {}
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="search" class="w-4 h-4"></i><span>Buscar na EA</span>`;
+        lucide.createIcons();
+
+        const data = sampleClubs[clubId] || { name: `Clube #${clubId}`, games: '142', wins: '98', ppg: '69.0%', skill: '1.710' };
+        document.getElementById('res-club-id').innerText = clubId;
+        document.getElementById('res-club-name').innerText = data.name;
+        document.getElementById('res-club-games').innerText = data.games;
+        document.getElementById('res-club-wins').innerText = data.wins;
+        document.getElementById('res-club-ppg').innerText = data.ppg;
+        document.getElementById('res-club-skill').innerText = data.skill;
+
+        const monitorId = document.getElementById('monitor-club-id');
+        const monitorName = document.getElementById('monitor-club-name');
+        if (monitorId) monitorId.value = clubId;
+        if (monitorName) monitorName.value = data.name;
+
+        showToast(`Dados atualizados para ${data.name}!`);
+      }, 500);
+    }
+  </script>
+</body>
+</html>

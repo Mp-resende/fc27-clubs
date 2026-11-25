@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Partidas{% endblock %}
+
+{% block content %}
+<h1>Partidas</h1>
+
+{% if request.query_params.get('erro') %}
+<div class="alert">{{ request.query_params.get('erro') }}</div>
+{% endif %}
+
+<div class="toolbar">
+  <form method="get" action="/partidas" class="filter-bar">
+    <input type="text" id="search" placeholder="Filtrar por clube ou data…" oninput="filterTable(this.value)" />
+    <select name="campeonato" onchange="this.form.submit()" aria-label="Filtrar por campeonato">
+      <option value="">Todos os campeonatos</option>
+      <option value="none" {% if championship_filter == 'none' %}selected{% endif %}>Sem campeonato</option>
+      {% for c in championships %}
+      <option value="{{ c.id }}" {% if championship_filter == c.id|string %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="tipo" onchange="this.form.submit()" aria-label="Filtrar por tipo de partida">
+      <option value="">Todos os tipos</option>
+      {% for key, label in type_labels.items() %}
+      <option value="{{ key }}" {% if match_type_filter == key %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="revisao" onchange="this.form.submit()" aria-label="Filtrar por situação do resultado">
+      <option value="">Todas as situações</option>
+      <option value="pending" {% if review_filter == 'pending' %}selected{% endif %}>Só pendentes/ignoradas</option>
+      <option value="needs_review" {% if review_filter == 'needs_review' %}selected{% endif %}>Aguardando revisão</option>
+      <option value="ignored" {% if review_filter == 'ignored' %}selected{% endif %}>Ignoradas</option>
+      <option value="corrected" {% if review_filter == 'corrected' %}selected{% endif %}>Corrigidas</option>
+      <option value="valid" {% if review_filter == 'valid' %}selected{% endif %}>Válidas</option>
+    </select>
+    <button type="submit" class="btn-secondary">Filtrar</button>
+  </form>
+  <a href="/campeonatos" class="btn-link">＋ Campeonatos</a>
+</div>
+
+{% if matches %}
+<form method="post" action="/partidas/classificar-lote">
+  <input type="hidden" name="next_url" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+
+  <table class="table" id="matches-table">
+    <thead>
+      <tr>
+        <th class="checkbox-cell"><input type="checkbox" id="select-all" onclick="toggleAll(this)" title="Selecionar todas" /></th>
+        <th>Data</th>
+        <th>Tipo</th>
+        <th>Mandante</th>
+        <th>Placar</th>
+        <th>Visitante</th>
+        <th>Resultado</th>
+        <th>Campeonato</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in matches %}
+      <tr class="{% if m.is_win %}row-win{% elif m.is_draw %}row-draw{% else %}row-loss{% endif %}{% if m.review.status == 'ignored' %} row-ignored{% endif %}">
+        <td class="checkbox-cell"><input type="checkbox" name="match_ids" value="{{ m.match_id }}" /></td>
+        <td>{{ m.played_at[:10] }}</td>
+        <td><span class="badge type">{{ m.match_type_label }}</span>{% if m.dnf %} <span class="badge loss">DNF</span>{% endif %}</td>
+        <td>{{ m.club_a_name }}</td>
+        <td class="score-cell">
+          {% if m.review.status == 'ignored' %}<span class="score-ignored">{{ m.club_a_goals }} – {{ m.club_b_goals }}</span>
+          {% else %}{{ m.club_a_goals }} – {{ m.club_b_goals }}{% endif %}
+        </td>
+        <td>{{ m.club_b_name }}</td>
+        <td>
+          {% if m.review.status == 'ignored' %}<span class="badge ignored">Ignorada</span>
+          {% elif m.review.status == 'needs_review' %}<span class="badge warn">Revisar</span>
+          {% elif m.review.status == 'corrected' %}<span class="badge corrected">Corrigida</span>
+          {% elif m.is_win %}<span class="badge win">Vitória</span>
+          {% elif m.is_draw %}<span class="badge draw">Empate</span>
+          {% else %}<span class="badge loss">Derrota</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if m.championship %}
+          <a href="/campeonatos/{{ m.championship.championship_id }}" class="chip" style="--chip: {{ m.championship.championship_color }}">{{ m.championship.championship_name }}</a>
+          {% if m.championship.stage %}<span class="sub-inline">{{ m.championship.stage }}{% if m.championship.round %} · R{{ m.championship.round }}{% endif %}</span>{% endif %}
+          {% else %}
+          <span class="muted">—</span>
+          {% endif %}
+        </td>
+        <td><a href="/partidas/{{ m.match_id }}" class="btn-link">Súmula</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if championships %}
+  <div class="panel bulk-panel">
+    <h2>Classificar selecionadas</h2>
+    <p class="sub">Marque as partidas acima e escolha o campeonato. Partidas já classificadas serão reatribuídas.</p>
+    <div class="form-grid">
+      <label>Campeonato *
+        <select name="championship_id" required>
+          <option value="">Selecione…</option>
+          {% for c in championships %}
+          <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Fase
+        <input type="text" name="stage" placeholder="Ex.: Fase de grupos" />
+      </label>
+      <label>Rodada
+        <input type="text" name="round" placeholder="Ex.: 3" />
+      </label>
+      <label>Perna
+        <select name="leg">
+          <option value="">—</option>
+          <option value="ida">Ida</option>
+          <option value="volta">Volta</option>
+          <option value="unico">Jogo único</option>
+        </select>
+      </label>
+      <label>Grupo
+        <input type="text" name="group_name" placeholder="Ex.: A" />
+      </label>
+      <label>Tags
+        <input type="text" name="tags" placeholder="clássico, decisão" />
+      </label>
+      <label class="span-2">Notas
+        <textarea name="notes" rows="2" placeholder="Observações opcionais"></textarea>
+      </label>
+    </div>
+    <button type="submit" class="btn">Classificar selecionadas</button>
+  </div>
+  {% endif %}
+</form>
+
+<div class="pagination">
+  <span class="sub">{{ total }} partida(s) no histórico</span>
+  <span class="pagination-links">
+    {% if has_prev %}<a href="{{ prev_url }}" class="btn-link">← Anterior</a>{% endif %}
+    <span>Página {{ page }} de {{ total_pages }}</span>
+    {% if has_next %}<a href="{{ next_url }}" class="btn-link">Próxima →</a>{% endif %}
+    <a href="/api/v1/clubs/{{ club_id }}/export/matches.csv" class="btn-link">⤓ Exportar CSV</a>
+  </span>
+</div>
+{% else %}
+<p class="empty">Nenhuma partida registrada com esse filtro.</p>
+{% endif %}
+
+<script>
+  function filterTable(query) {
+    const rows = document.querySelectorAll('#matches-table tbody tr');
+    query = query.toLowerCase();
+    rows.forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+    });
+  }
+
+  function toggleAll(source) {
+    document.querySelectorAll('input[name="match_ids"]').forEach(cb => { cb.checked = source.checked; });
+  }
+</script>
+{% endblock %}

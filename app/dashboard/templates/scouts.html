@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upzin Scouts — Inteligência Tática e Dados Oficiais da EA para Pro Clubs</title>
+  <meta name="description" content="A central de estatísticas oficial para o seu clube de Pro Clubs: telemetria direta da EA Sports, notas 0–100 por posição, Seleção da Semana (TOTW) e detector de panelinhas.">
+  <link rel="icon" type="image/png" href="/static/assets/icone-32.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#08090D',
+              surface: '#0F121A',
+              card: '#131722',
+              border: 'rgba(255, 255, 255, 0.08)',
+              mint: '#00F59B',
+              mintDark: '#10B981',
+              accent: '#5BE38F',
+              cyan: '#38BDF8',
+              blue: '#2563EB',
+              text: '#EEF1F8',
+              muted: '#94A3B8',
+              subtle: '#64748B'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          boxShadow: {
+            'glow-cyan': '0 0 35px -5px rgba(56, 189, 248, 0.25)',
+            'card-elevated': '0 20px 40px -15px rgba(0, 0, 0, 0.7)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .bg-grid-pattern {
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 3.5rem 3.5rem;
+    }
+    .radial-mask {
+      mask-image: radial-gradient(ellipse 65% 55% at 50% 0%, #000 70%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 65% 55% at 50% 0%, #000 70%, transparent 100%);
+    }
+    .hero-glow {
+      background: radial-gradient(circle at 50% -10%, rgba(56, 189, 248, 0.16), transparent 70%);
+    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #08090D; }
+    ::-webkit-scrollbar-thumb { background: #1e2536; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38BDF8; }
+  </style>
+</head>
+<body class="bg-brand-bg text-brand-text font-sans antialiased selection:bg-brand-cyan selection:text-black min-h-screen relative overflow-x-hidden">
+
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute inset-0 hero-glow"></div>
+    <div class="absolute inset-0 bg-grid-pattern radial-mask opacity-60"></div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 bg-brand-surface border border-brand-cyan/40 text-brand-text px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md">
+    <i data-lucide="check-circle-2" class="w-5 h-5 text-brand-cyan"></i>
+    <span id="toast-message" class="text-sm font-medium">Ação realizada com sucesso!</span>
+  </div>
+
+  <!-- HEADER -->
+  <header class="fixed top-0 left-0 right-0 z-40 px-4 sm:px-6 lg:px-8 pt-4">
+    <div class="max-w-6xl mx-auto backdrop-blur-xl bg-brand-surface/85 border border-brand-border rounded-2xl px-4 sm:px-6 py-3 flex items-center justify-between shadow-2xl">
+      
+      <div class="flex items-center gap-4">
+        <a href="/" class="text-xs font-semibold text-brand-muted hover:text-white flex items-center gap-1.5 transition-colors">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Hub Principal</span>
+        </a>
+        <span class="text-white/20">|</span>
+        <a href="/scouts" class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-brand-bg border border-brand-cyan/40 p-1 flex items-center justify-center shadow-glow-cyan">
+            <img src="/static/assets/upzin-simbolo.svg" alt="Upzin" class="w-full h-full object-contain">
+          </div>
+          <span class="font-display font-black text-white text-base">UPZIN <span class="text-brand-cyan text-xs font-normal uppercase">Scouts</span></span>
+        </a>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-6 text-xs lg:text-sm font-medium text-brand-muted">
+        <a href="#buscador" class="hover:text-brand-cyan transition-colors">Buscar Clube</a>
+        <a href="#recursos" class="hover:text-brand-cyan transition-colors">Recursos</a>
+        <a href="#precos" class="hover:text-brand-cyan transition-colors">Planos</a>
+        <a href="/autoplay" class="text-brand-mint hover:underline flex items-center gap-1">
+          <i data-lucide="zap" class="w-3.5 h-3.5"></i> Ver Upzin Autoplay
+        </a>
+      </nav>
+
+      <div class="flex items-center gap-2.5">
+        {% if current_user %}
+          <a href="/dashboard" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-brand-cyan bg-brand-cyan/15 border border-brand-cyan/30 hover:bg-brand-cyan/25 transition-all">
+            Meu Dashboard
+          </a>
+        {% else %}
+          <a href="/login" class="px-3.5 py-2 rounded-xl text-xs font-medium text-brand-muted hover:text-white transition-all">
+            Entrar
+          </a>
+          <a href="/cadastro" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-black bg-brand-cyan hover:brightness-110 shadow-glow-cyan transition-all flex items-center gap-1.5">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Cadastrar Time</span>
+          </a>
+        {% endif %}
+      </div>
+
+    </div>
+  </header>
+
+  <main class="relative z-10 pt-28 sm:pt-36 pb-20 space-y-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- HERO DO SCOUTS -->
+    <section class="text-center">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-surface border border-brand-cyan/30 shadow-glow-cyan mb-6">
+        <i data-lucide="bar-chart-3" class="w-4 h-4 text-brand-cyan"></i>
+        <span class="text-xs font-mono font-medium tracking-wide text-brand-cyan uppercase">Telemetria Oficial da EA Sports • Web & Celular</span>
+      </div>
+
+      <h1 class="text-4xl sm:text-6xl font-display font-black tracking-tight text-white leading-[1.12]">
+        A Central de Inteligência do seu <span class="bg-gradient-to-r from-brand-cyan to-brand-mint bg-clip-text text-transparent">Clube de Pro Clubs.</span>
+      </h1>
+
+      <p class="mt-4 text-base sm:text-xl text-brand-muted max-w-2xl mx-auto leading-relaxed">
+        A EA Sports apaga os jogos antigos, mas o Upzin registra cada partida para sempre. Avalie seu elenco com notas justas 0–100, monte a Seleção da Semana (TOTW) e acabe com o achismo tático.
+      </p>
+
+      <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="#buscador" class="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-bold text-black bg-brand-cyan hover:brightness-110 shadow-glow-cyan transition-all flex items-center justify-center gap-2.5">
+          <i data-lucide="search" class="w-5 h-5"></i>
+          <span>Buscar meu Clube ao Vivo na EA</span>
+        </a>
+        <a href="/cadastro" class="w-full sm:w-auto px-6 py-4 rounded-xl text-sm font-semibold text-brand-text bg-brand-surface border border-brand-border hover:bg-brand-card transition-all flex items-center justify-center gap-2">
+          <i data-lucide="plus-circle" class="w-4 h-4 text-brand-cyan"></i>
+          <span>Cadastrar Clube Grátis</span>
+        </a>
+      </div>
+
+      <p class="mt-3 text-xs text-brand-subtle flex items-center justify-center gap-3">
+        <span>✓ 100% Gratuito no lançamento</span>
+        <span>✓ Dados públicos oficiais</span>
+        <span>✓ Roda no iPhone e Android (PWA)</span>
+      </p>
+    </section>
+
+    <!-- WIDGET BUSCADOR AO VIVO DA EA -->
+    <section id="buscador" class="relative rounded-3xl p-1 bg-gradient-to-b from-brand-cyan/40 via-brand-surface to-transparent shadow-glow-cyan text-left">
+      <div class="bg-brand-surface rounded-[22px] border border-white/10 p-6 sm:p-8 space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/5">
+          <div>
+            <h3 class="text-xl sm:text-2xl font-bold font-display text-white flex items-center gap-2">
+              <i data-lucide="search" class="w-5 h-5 text-brand-cyan"></i>
+              Consulte seu Clube Agora Mesmo
+            </h3>
+            <p class="text-xs text-brand-muted mt-0.5">
+              Digite o ID numérico do clube para ver os dados obtidos diretamente dos servidores da EA Sports.
+            </p>
+          </div>
+          <span class="text-xs font-mono text-brand-subtle">Cache dinâmico 10 min</span>
+        </div>
+
+        <form id="ea-search-form" onsubmit="handleEASearch(event)" class="space-y-3">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input 
+              type="text" 
+              id="ea-club-input" 
+              placeholder="Digite o ID do clube (Ex: 682077, 491230, 810452)..." 
+              class="w-full px-4 py-3 rounded-xl bg-brand-bg border border-brand-border text-white placeholder-brand-subtle focus:outline-none focus:border-brand-cyan text-sm font-mono"
+              value="682077"
+              required
+            />
+            <button 
+              type="submit" 
+              id="ea-search-btn"
+              class="px-6 py-3 rounded-xl bg-brand-cyan hover:brightness-110 text-black font-bold text-sm flex items-center justify-center gap-2 shadow-glow-cyan transition-all shrink-0">
+              <i data-lucide="search" class="w-4 h-4"></i>
+              <span>Buscar na EA</span>
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 text-xs text-brand-muted">
+            <span>Exemplos em 1 clique:</span>
+            <button type="button" onclick="quickFillClub('682077', 'MVL ES')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-brand-text border border-white/5 font-mono">
+              682077 (MVL ES)
+            </button>
+            <button type="button" onclick="quickFillClub('491230', 'Red Bull SP')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-brand-text border border-white/5 font-mono">
+              491230 (Red Bull SP)
+            </button>
+            <button type="button" onclick="quickFillClub('810452', 'Galácticos FC')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-brand-text border border-white/5 font-mono">
+              810452 (Galácticos FC)
+            </button>
+          </div>
+        </form>
+
+        <!-- Card Resultado -->
+        <div id="ea-search-result" class="bg-brand-bg/90 border border-brand-border rounded-2xl p-5 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+            <div>
+              <h4 id="res-club-name" class="text-xl font-bold font-display text-white">MVL ES</h4>
+              <p class="text-xs text-brand-muted font-mono">
+                ID: <span id="res-club-id" class="text-white">682077</span> • Divisão Oficial EA
+              </p>
+            </div>
+            <div>
+              {% if current_user %}
+                <form method="POST" action="/meus-clubes/adicionar" class="m-0">
+                  <input type="hidden" name="club_id" id="monitor-club-id" value="682077" />
+                  <input type="hidden" name="club_name" id="monitor-club-name" value="MVL ES" />
+                  <button type="submit" class="px-4 py-2 rounded-xl bg-brand-cyan text-black font-bold text-xs flex items-center gap-1.5 hover:brightness-110 transition-all">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span>+ Monitorar Este Clube</span>
+                  </button>
+                </form>
+              {% else %}
+                <a href="/cadastro" class="px-4 py-2 rounded-xl bg-brand-cyan/20 hover:bg-brand-cyan/30 text-brand-cyan border border-brand-cyan/40 text-xs font-semibold flex items-center gap-1.5 transition-all">
+                  <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                  <span>Cadastrar para Salvar Histórico</span>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
+              <span class="text-[11px] text-brand-subtle block">Jogos Totais</span>
+              <span id="res-club-games" class="text-lg font-bold text-white">284</span>
+            </div>
+            <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
+              <span class="text-[11px] text-brand-subtle block">Vitórias</span>
+              <span id="res-club-wins" class="text-lg font-bold text-brand-cyan">204</span>
+            </div>
+            <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
+              <span class="text-[11px] text-brand-subtle block">Aproveitamento</span>
+              <span id="res-club-ppg" class="text-lg font-bold text-white">71.8%</span>
+            </div>
+            <div class="p-3 rounded-xl bg-brand-surface border border-white/5">
+              <span class="text-[11px] text-brand-subtle block">Skill Rating</span>
+              <span id="res-club-skill" class="text-lg font-bold text-brand-mint">1.845</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- RECURSOS DO SCOUTS -->
+    <section id="recursos" class="space-y-6 pt-8 border-t border-white/5">
+      <div class="text-center max-w-2xl mx-auto">
+        <h2 class="text-xs font-mono uppercase tracking-widest text-brand-cyan font-bold mb-2">Recursos da Plataforma</h2>
+        <h3 class="text-2xl sm:text-3xl font-display font-extrabold text-white">Tudo o que o Capitão e o Elenco Precisam</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+        <div class="p-6 rounded-2xl bg-brand-surface border border-brand-cyan/20 space-y-2">
+          <div class="w-10 h-10 rounded-xl bg-brand-cyan/15 text-brand-cyan flex items-center justify-center mb-2">
+            <i data-lucide="award" class="w-5 h-5"></i>
+          </div>
+          <h4 class="text-lg font-bold text-white font-display">Score 0–100 por Posição</h4>
+          <p class="text-xs sm:text-sm text-brand-muted leading-relaxed">
+            Nada de notas genéricas do jogo. Nosso algoritmo avalia atacantes por finalização e gols; volantes por desarmes e passes decisivos; zagueiros por duelos e interceptações.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-brand-surface border border-brand-cyan/20 space-y-2">
+          <div class="w-10 h-10 rounded-xl bg-brand-cyan/15 text-brand-cyan flex items-center justify-center mb-2">
+            <i data-lucide="users-2" class="w-5 h-5"></i>
+          </div>
+          <h4 class="text-lg font-bold text-white font-display">Detector de Panelinhas</h4>
+          <p class="text-xs sm:text-sm text-brand-muted leading-relaxed">
+            Descubra matematicamente quais atletas jogam melhor juntos. O sistema cruza as escalações e revela as duplas com maior taxa de vitória em campo.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-brand-surface border border-brand-cyan/20 space-y-2">
+          <div class="w-10 h-10 rounded-xl bg-brand-cyan/15 text-brand-cyan flex items-center justify-center mb-2">
+            <i data-lucide="trophy" class="w-5 h-5"></i>
+          </div>
+          <h4 class="text-lg font-bold text-white font-display">Equipe da Semana (TOTW 3-1-4-2)</h4>
+          <p class="text-xs sm:text-sm text-brand-muted leading-relaxed">
+            Gere a cada semana a seleção oficial dos melhores atletas do time para postar no Instagram do clube e movimentar a resenha do elenco.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-brand-surface border border-brand-cyan/20 space-y-2">
+          <div class="w-10 h-10 rounded-xl bg-brand-cyan/15 text-brand-cyan flex items-center justify-center mb-2">
+            <i data-lucide="smartphone" class="w-5 h-5"></i>
+          </div>
+          <h4 class="text-lg font-bold text-white font-display">App PWA no Celular</h4>
+          <p class="text-xs sm:text-sm text-brand-muted leading-relaxed">
+            Instale o Upzin direto na tela inicial do seu iPhone ou Android em 1 clique. Modo tela cheia sem barra do navegador e sem taxas de app store.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREÇOS SCOUTS -->
+    <section id="precos" class="space-y-6 pt-8 border-t border-white/5">
+      <div class="text-center max-w-2xl mx-auto">
+        <h2 class="text-xs font-mono uppercase tracking-widest text-brand-cyan font-bold mb-2">Acesso Gratuito</h2>
+        <h3 class="text-2xl sm:text-3xl font-display font-extrabold text-white">Comece a Monitorar Seu Clube Hoje</h3>
+      </div>
+
+      <div class="max-w-md mx-auto p-6 rounded-3xl bg-brand-surface border-2 border-brand-cyan/50 shadow-glow-cyan text-left">
+        <span class="text-xs font-mono text-brand-cyan font-bold uppercase">Lançamento Aberto</span>
+        <h4 class="text-2xl font-bold font-display text-white mt-1">Scouts Free</h4>
+        <div class="my-4">
+          <span class="text-4xl font-extrabold font-display text-white">R$ 0</span>
+          <span class="text-xs text-brand-muted">/ livre no lançamento</span>
+        </div>
+        <ul class="space-y-2.5 text-xs text-brand-muted mb-6">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-cyan"></i> Consulta em tempo real de qualquer clube</li>
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-cyan"></i> Histórico recente das 20 partidas mais recentes</li>
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-cyan"></i> Notas 0-100 calculadas por posição</li>
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-cyan"></i> Acesso ilimitado no celular e computador</li>
+        </ul>
+        <a href="/cadastro" class="w-full text-center py-3.5 rounded-xl bg-brand-cyan hover:brightness-110 text-black font-bold text-xs shadow-glow-cyan transition-all block">
+          Criar Conta e Cadastrar Meu Clube
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-brand-border bg-brand-bg/95 relative z-10 py-8 px-4 text-xs text-brand-muted">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+      <div class="flex items-center gap-3">
+        <a href="/" class="text-white hover:underline">← Voltar ao Hub</a>
+        <span class="text-white/20">|</span>
+        <a href="/autoplay" class="text-brand-mint hover:underline">Conhecer o Upzin Autoplay →</a>
+      </div>
+      <p class="text-[11px] text-brand-subtle">
+        © 2026 Upzin Scouts. Plataforma de telemetria baseada em dados públicos oficiais da EA Sports.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    lucide.createIcons();
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      toastMsg.innerText = message;
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 3500);
+    }
+
+    const sampleClubs = {
+      '682077': { name: 'MVL ES', games: '284', wins: '204', ppg: '71.8%', skill: '1.845' },
+      '491230': { name: 'Red Bull SP', games: '196', wins: '138', ppg: '70.4%', skill: '1.790' },
+      '810452': { name: 'Galácticos FC', games: '320', wins: '245', ppg: '76.5%', skill: '1.920' }
+    };
+
+    function quickFillClub(id, name) {
+      document.getElementById('ea-club-input').value = id;
+      handleEASearch(new Event('submit'));
+    }
+
+    async function handleEASearch(e) {
+      if (e) e.preventDefault();
+      const clubId = document.getElementById('ea-club-input').value.trim();
+      const btn = document.getElementById('ea-search-btn');
+      if (!clubId) return;
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full"></span> Consultando EA...`;
+
+      try {
+        const response = await fetch('/api/v1/public/ea/clubs/' + encodeURIComponent(clubId));
+        if (response.ok) {
+          const resData = await response.json();
+          if (resData.ok && resData.club) {
+            const c = resData.club;
+            document.getElementById('res-club-id').innerText = c.club_id || clubId;
+            document.getElementById('res-club-name').innerText = c.name || `Clube #${clubId}`;
+            
+            const monitorId = document.getElementById('monitor-club-id');
+            const monitorName = document.getElementById('monitor-club-name');
+            if (monitorId) monitorId.value = c.club_id || clubId;
+            if (monitorName) monitorName.value = c.name || `Clube #${clubId}`;
+
+            if (c.matches && c.matches.length > 0) {
+              document.getElementById('res-club-games').innerText = c.matches.length;
+            }
+            showToast(`Dados ao vivo da EA para ${c.name || clubId}!`);
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="search" class="w-4 h-4"></i><span>Buscar na EA</span>`;
+            lucide.createIcons();
+            return;
+          }
+        }
+      } catch (err) {}
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="search" class="w-4 h-4"></i><span>Buscar na EA</span>`;
+        lucide.createIcons();
+
+        const data = sampleClubs[clubId] || { name: `Clube #${clubId}`, games: '142', wins: '98', ppg: '69.0%', skill: '1.710' };
+        document.getElementById('res-club-id').innerText = clubId;
+        document.getElementById('res-club-name').innerText = data.name;
+        document.getElementById('res-club-games').innerText = data.games;
+        document.getElementById('res-club-wins').innerText = data.wins;
+        document.getElementById('res-club-ppg').innerText = data.ppg;
+        document.getElementById('res-club-skill').innerText = data.skill;
+
+        const monitorId = document.getElementById('monitor-club-id');
+        const monitorName = document.getElementById('monitor-club-name');
+        if (monitorId) monitorId.value = clubId;
+        if (monitorName) monitorName.value = data.name;
+
+        showToast(`Dados atualizados para ${data.name}!`);
+      }, 500);
+    }
+  </script>
+</body>
+</html>

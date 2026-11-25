@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Campeonatos{% endblock %}
+
+{% block content %}
+<h1>Campeonatos</h1>
+
+{% if request.query_params.get('erro') %}
+<div class="alert">{{ request.query_params.get('erro') }}</div>
+{% endif %}
+
+<div class="panel">
+  <h2 style="margin-top:0">Novo campeonato</h2>
+  <form method="post" action="/campeonatos" class="form-grid">
+    <label>Nome *
+      <input type="text" name="name" required maxlength="120" placeholder="Ex.: Liga dos Amigos 2026" />
+    </label>
+    <label>Formato
+      <select name="format">
+        {% for value, label in format_labels.items() %}
+        <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Status
+      <select name="status">
+        {% for value, label in status_labels.items() %}
+        <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Início
+      <input type="date" name="start_date" />
+    </label>
+    <label>Fim
+      <input type="date" name="end_date" />
+    </label>
+    <label>Cor
+      <input type="color" name="color" value="#3b82f6" />
+    </label>
+    <label>Descrição
+      <input type="text" name="description" maxlength="2000" placeholder="Opcional" />
+    </label>
+    <label>Link externo
+      <input type="url" name="external_url" maxlength="500" placeholder="https://…" />
+    </label>
+    <label class="span-2">Campos extras (JSON)
+      <textarea name="extra" rows="2" placeholder='{"organizador": "…"}'></textarea>
+    </label>
+    <div class="form-actions span-2">
+      <button type="submit" class="btn">Criar campeonato</button>
+    </div>
+  </form>
+</div>
+
+{% if championships %}
+<h2>Seus campeonatos</h2>
+<div class="champion-grid">
+  {% for c in championships %}
+  <article class="champion-card" style="--chip: {{ c.color }}">
+    <header class="champion-head">
+      <span class="color-dot" style="background: {{ c.color }}"></span>
+      <a href="/campeonatos/{{ c.id }}" class="champion-name">{{ c.name }}</a>
+      <span class="badge {% if c.status == 'active' %}win{% elif c.status == 'finished' %}draw{% else %}loss{% endif %}">{{ c.status_label }}</span>
+    </header>
+    <p class="sub">
+      {{ c.format_label }}
+      {% if c.start_date %} · {{ c.start_date }}{% endif %}
+      {% if c.end_date %} → {{ c.end_date }}{% endif %}
+    </p>
+    <div class="mini-stats">
+      <span><strong>{{ c.campaign.played }}</strong> jogos</span>
+      <span class="win-text"><strong>{{ c.campaign.wins }}</strong>V</span>
+      <span><strong>{{ c.campaign.draws }}</strong>E</span>
+      <span class="loss-text"><strong>{{ c.campaign.losses }}</strong>D</span>
+      <span><strong>{{ c.campaign.points }}</strong> pts</span>
+      <span class="muted">{{ c.campaign.points_pct }}%</span>
+    </div>
+    <a href="/campeonatos/{{ c.id }}" class="btn-link">Abrir campeonato</a>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">Nenhum campeonato cadastrado. Crie o primeiro acima.</p>
+{% endif %}
+{% endblock %}

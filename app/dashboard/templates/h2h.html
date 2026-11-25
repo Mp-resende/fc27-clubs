@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}H2H{% endblock %}
+
+{% block content %}
+<h1>Confrontos Diretos</h1>
+
+<div class="filter-bar">
+  <form method="get" action="/h2h" class="filter-form">
+    <label>Adversário
+      <select name="adversario">
+        <option value="">Escolher…</option>
+        {% for opp in opponents %}
+        <option value="{{ opp.club_id }}" {% if selected == opp.club_id %}selected{% endif %}>{{ opp.name }} ({{ opp.played }} jogos)</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Tipo
+      <select name="tipo">
+        <option value="">Todos</option>
+        {% for key, label in type_labels.items() %}
+        <option value="{{ key }}" {% if filters.match_type == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Resultado
+      <select name="resultado">
+        <option value="">Todos</option>
+        {% for key, label in result_labels.items() %}
+        <option value="{{ key }}" {% if filters.result == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Janela
+      <select name="dias">
+        <option value="">Sempre</option>
+        <option value="30" {% if filters.days == 30 %}selected{% endif %}>30 dias</option>
+        <option value="90" {% if filters.days == 90 %}selected{% endif %}>90 dias</option>
+      </select>
+    </label>
+    <button type="submit" class="btn">Ver confronto</button>
+  </form>
+</div>
+
+{% if not selected %}
+<div class="empty">Escolha um adversário acima para ver o histórico dos confrontos.</div>
+{% if official %}
+<h2>Nossa temporada EA</h2>
+<div class="stats-grid">
+  <div class="stat-card"><span class="stat-value">{{ official.games_played }}</span><span class="stat-label">Jogos</span></div>
+  <div class="stat-card win"><span class="stat-value">{{ official.wins }}</span><span class="stat-label">V</span></div>
+  <div class="stat-card draw"><span class="stat-value">{{ official.draws }}</span><span class="stat-label">E</span></div>
+  <div class="stat-card loss"><span class="stat-value">{{ official.losses }}</span><span class="stat-label">D</span></div>
+  <div class="stat-card"><span class="stat-value">{{ official.skill_rating or "—" }}</span><span class="stat-label">Skill Rating</span></div>
+</div>
+{% endif %}
+{% endif %}
+
+{% if selected and h2h %}
+<h2>{{ me }} x {{ opponent_name }}</h2>
+
+<div class="h2h-vs">
+  <div class="vs-card">
+    <span class="vs-name">{{ me }}</span>
+    <span class="vs-goals">{{ h2h.goals_for or 0 }}</span>
+    <span class="sub">{{ h2h.wins }} vitórias · {{ h2h.goals_per_game or 0 }} gols/jogo</span>
+  </div>
+  <div class="vs-mid">
+    <span class="vs-label">× {{ h2h.played }} jogos ×</span>
+    <span class="form-pill w ">{{ h2h.wins }}</span>
+    <span class="form-pill d">{{ h2h.draws }}</span>
+    <span class="form-pill l">{{ h2h.losses }}</span>
+  </div>
+  <div class="vs-card">
+    <span class="vs-name">{{ opponent_name }}</span>
+    <span class="vs-goals">{{ h2h.goals_against or 0 }}</span>
+    <span class="sub">{{ h2h.losses }} vitórias · {{ h2h.goals_against_per_game or 0 }} gols/jogo</span>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card"><span class="stat-value">{{ h2h.ppg or "—" }}</span><span class="stat-label">Nossos pontos/jogo</span></div>
+  <div class="stat-card"><span class="stat-value">{{ h2h.goal_diff }}</span><span class="stat-label">Saldo no confronto</span></div>
+  <div class="stat-card"><span class="stat-value">{{ h2h.win_rate or 0 }}%</span><span class="stat-label">Aproveitamento</span></div>
+  <div class="stat-card"><span class="stat-value">{{ h2h.sessions }}</span><span class="stat-label">Sessões</span></div>
+</div>
+
+<h3>Partidas</h3>
+<table class="table">
+  <thead><tr><th>Data</th><th>Tipo</th><th>Placar</th><th>Resultado</th></tr></thead>
+  <tbody>
+    {% for m in h2h.meetings %}
+    <tr>
+      <td>{{ m.played_at[:10] if m.played_at else "—" }}</td>
+      <td><span class="badge type">{{ m.type_label }}</span></td>
+      <td><a href="/partidas/{{ m.match_id }}">{{ m.goals_for }} – {{ m.goals_against }}</a></td>
+      <td><span class="form-pill {{ m.letter | lower }}">{{ {"W": "V", "D": "E", "L": "D"}.get(m.letter, m.letter) }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if opponent_official %}
+<h3>Adversário na temporada EA <span class="source-tag ea">Fonte: EA</span></h3>
+<div class="stats-grid">
+  <div class="stat-card"><span class="stat-value">{{ opponent_official.games_played }}</span><span class="stat-label">Jogos</span></div>
+  <div class="stat-card win"><span class="stat-value">{{ opponent_official.wins }}</span><span class="stat-label">V</span></div>
+  <div class="stat-card draw"><span class="stat-value">{{ opponent_official.draws }}</span><span class="stat-label">E</span></div>
+  <div class="stat-card loss"><span class="stat-value">{{ opponent_official.losses }}</span><span class="stat-label">D</span></div>
+  <div class="stat-card"><span class="stat-value">{{ opponent_official.skill_rating or "—" }}</span><span class="stat-label">Skill Rating</span></div>
+  <div class="stat-card"><span class="stat-value">{{ opponent_official.best_division or "—" }}</span><span class="stat-label">Melhor divisão</span></div>
+</div>
+<p class="sub">
+  Gols {{ opponent_official.goals }}:{{ opponent_official.goals_against }} ·
+  {{ opponent_official.goals_per_game }} pró/jogo · ppg {{ opponent_official.ppg }}
+</p>
+{% else %}
+<p class="sub">
+  Sem snapshot de temporada para {{ opponent_name }}.
+</p>
+<form method="post" action="/h2h/{{ selected }}/atualizar" class="inline-form">
+  <button type="submit" class="btn">Buscar dados do adversário na EA</button>
+</form>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}{{ championship.name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1><span class="color-dot" style="background: {{ championship.color }}"></span> {{ championship.name }}</h1>
+  <a href="/campeonatos" class="btn-secondary">← Campeonatos</a>
+</div>
+
+<p class="match-meta">
+  <span class="badge {% if championship.status == 'active' %}win{% elif championship.status == 'finished' %}draw{% else %}loss{% endif %}">{{ championship.status_label }}</span>
+  {{ championship.format_label }}
+  {% if championship.start_date %} · {{ championship.start_date }}{% endif %}
+  {% if championship.end_date %} → {{ championship.end_date }}{% endif %}
+  {% if championship.external_url %} · <a href="{{ championship.external_url }}" target="_blank" rel="noopener">Link externo</a>{% endif %}
+</p>
+
+{% if championship.description %}<p class="sub">{{ championship.description }}</p>{% endif %}
+
+{% if erro %}
+<div class="alert">{{ erro }}</div>
+{% endif %}
+
+{% if championship.extra %}
+<details class="panel">
+  <summary>Campos extras</summary>
+  <pre class="json-block">{{ championship.extra | tojson(indent=2) }}</pre>
+</details>
+{% endif %}
+
+<div class="stats-grid">
+  <div class="stat-card"><span class="stat-value">{{ campaign.played }}</span><span class="stat-label">Jogos</span></div>
+  <div class="stat-card win"><span class="stat-value">{{ campaign.wins }}</span><span class="stat-label">Vitórias</span></div>
+  <div class="stat-card draw"><span class="stat-value">{{ campaign.draws }}</span><span class="stat-label">Empates</span></div>
+  <div class="stat-card loss"><span class="stat-value">{{ campaign.losses }}</span><span class="stat-label">Derrotas</span></div>
+  <div class="stat-card"><span class="stat-value">{{ campaign.goals_for }}</span><span class="stat-label">Gols Pró</span></div>
+  <div class="stat-card"><span class="stat-value">{{ campaign.goals_against }}</span><span class="stat-label">Gols Contra</span></div>
+  <div class="stat-card"><span class="stat-value">{{ campaign.goal_diff }}</span><span class="stat-label">Saldo</span></div>
+  <div class="stat-card"><span class="stat-value">{{ campaign.points }}</span><span class="stat-label">Pontos</span></div>
+  <div class="stat-card"><span class="stat-value">{{ campaign.points_pct }}%</span><span class="stat-label">Aproveitamento</span></div>
+</div>
+
+{% if stages %}
+<h2>Por fase</h2>
+<table class="table">
+  <thead>
+    <tr><th>Fase</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th><th>Pts</th></tr>
+  </thead>
+  <tbody>
+    {% for s in stages %}
+    <tr>
+      <td>{{ s.stage }}</td>
+      <td>{{ s.played }}</td>
+      <td>{{ s.wins }}</td>
+      <td>{{ s.draws }}</td>
+      <td>{{ s.losses }}</td>
+      <td>{{ s.goals_for }}</td>
+      <td>{{ s.goals_against }}</td>
+      <td><strong>{{ s.points }}</strong></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<div class="two-col">
+  <section>
+    <h2>Artilharia</h2>
+    {% if top_scorers %}
+    <table class="table">
+      <thead><tr><th>Jogador</th><th>J</th><th>G</th><th>A</th></tr></thead>
+      <tbody>
+        {% for p in top_scorers %}
+        <tr>
+          <td><a href="/jogadores/{{ p.player_key }}">{{ p.playername }}</a></td>
+          <td>{{ p.matches }}</td>
+          <td><strong>{{ p.goals }}</strong></td>
+          <td>{{ p.assists }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">Sem gols registrados ainda.</p>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Confrontos</h2>
+    {% if opponents %}
+    <table class="table">
+      <thead><tr><th>Adversário</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th></tr></thead>
+      <tbody>
+        {% for o in opponents %}
+        <tr>
+          <td>{{ o.name }}</td>
+          <td>{{ o.played }}</td>
+          <td>{{ o.wins }}</td>
+          <td>{{ o.draws }}</td>
+          <td>{{ o.losses }}</td>
+          <td>{{ o.goals_for }}</td>
+          <td>{{ o.goals_against }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">Nenhum confronto ainda.</p>
+    {% endif %}
+  </section>
+</div>
+
+<h2>Partidas do campeonato</h2>
+{% if matches %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Confronto</th>
+      <th>Placar</th>
+      <th>Resultado</th>
+      <th>Fase</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in matches %}
+    <tr class="{% if m.is_win %}row-win{% elif m.is_draw %}row-draw{% else %}row-loss{% endif %}{% if m.review.status == 'ignored' %} row-ignored{% endif %}">
+      <td>{{ m.played_at[:10] }}</td>
+      <td>{{ m.club_a_name }} <span class="vs">vs</span> {{ m.club_b_name }}</td>
+      <td class="score-cell">
+        {% if m.review.status == 'ignored' %}<span class="score-ignored">{{ m.club_a_goals }} – {{ m.club_b_goals }}</span>
+        {% else %}{{ m.club_a_goals }} – {{ m.club_b_goals }}{% endif %}
+      </td>
+      <td>
+        {% if m.review.status == 'ignored' %}<span class="badge ignored">Ignorada</span>
+        {% elif m.review.status == 'needs_review' %}<span class="badge warn">Revisar</span>
+        {% elif m.review.status == 'corrected' %}<span class="badge corrected">Corrigida</span>
+        {% elif m.is_win %}<span class="badge win">V</span>
+        {% elif m.is_draw %}<span class="badge draw">E</span>
+        {% else %}<span class="badge loss">D</span>{% endif %}
+      </td>
+      <td>
+        {% if m.championship and m.championship.stage %}{{ m.championship.stage }}{% endif %}
+        {% if m.championship and m.championship.round %}<span class="sub-inline">Rodada {{ m.championship.round }}</span>{% endif %}
+        {% if m.championship and m.championship.leg %}<span class="sub-inline">{{ leg_labels.get(m.championship.leg, m.championship.leg) }}</span>{% endif %}
+        {% if m.championship and m.championship.group_name %}<span class="sub-inline">Grupo {{ m.championship.group_name }}</span>{% endif %}
+        {% if not m.championship or (not m.championship.stage and not m.championship.round) %}<span class="muted">—</span>{% endif %}
+      </td>
+      <td><a href="/partidas/{{ m.match_id }}" class="btn-link">Súmula</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">Nenhuma partida classificada neste campeonato ainda. Classifique em <a href="/partidas">Partidas</a>.</p>
+{% endif %}
+
+<h2>Editar campeonato</h2>
+<details class="panel">
+  <summary>Mostrar formulário</summary>
+  <form method="post" action="/campeonatos/{{ championship.id }}/editar" class="form-grid">
+    <label>Nome *
+      <input type="text" name="name" required maxlength="120" value="{{ championship.name }}" />
+    </label>
+    <label>Formato
+      <select name="format">
+        {% for value, label in format_labels.items() %}
+        <option value="{{ value }}" {% if championship.format == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Status
+      <select name="status">
+        {% for value, label in status_labels.items() %}
+        <option value="{{ value }}" {% if championship.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Início
+      <input type="date" name="start_date" value="{{ championship.start_date or '' }}" />
+    </label>
+    <label>Fim
+      <input type="date" name="end_date" value="{{ championship.end_date or '' }}" />
+    </label>
+    <label>Cor
+      <input type="color" name="color" value="{{ championship.color or '#3b82f6' }}" />
+    </label>
+    <label>Descrição
+      <input type="text" name="description" maxlength="2000" value="{{ championship.description or '' }}" />
+    </label>
+    <label>Link externo
+      <input type="url" name="external_url" maxlength="500" value="{{ championship.external_url or '' }}" />
+    </label>
+    <label class="span-2">Campos extras (JSON)
+      <textarea name="extra" rows="3">{% if championship.extra %}{{ championship.extra | tojson(indent=2) }}{% endif %}</textarea>
+    </label>
+    <div class="form-actions span-2">
+      <button type="submit" class="btn">Salvar alterações</button>
+    </div>
+  </form>
+</details>
+
+<div class="toolbar" style="margin-top:1.5rem">
+  {% if championship.status != 'archived' %}
+  <form method="post" action="/campeonatos/{{ championship.id }}/arquivar" class="inline-form">
+    <button type="submit" class="btn-secondary">Arquivar campeonato</button>
+  </form>
+  {% endif %}
+  <form method="post" action="/campeonatos/{{ championship.id }}/excluir" class="inline-form"
+        onsubmit="return confirm('Excluir o campeonato {{ championship.name }}?');">
+    <button type="submit" class="btn-danger" {% if campaign.played %}disabled title="Desclassifique as partidas antes de excluir"{% endif %}>Excluir campeonato</button>
+  </form>
+  {% if campaign.played %}
+  <span class="sub">Para excluir, desclassifique as {{ campaign.played }} partida(s) ou mantenha o campeonato arquivado.</span>
+  {% endif %}
+</div>
+{% endblock %}

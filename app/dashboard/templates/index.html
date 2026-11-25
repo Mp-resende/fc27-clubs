@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}Início — {{ club_name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+      <span>⚽ {{ club_name }}</span>
+      {% if not is_demo_mode %}
+        <span style="font-size: 0.75rem; background: #238636; color: #fff; padding: 0.2rem 0.5rem; border-radius: 12px; font-weight: normal;">Seu Clube Ativo</span>
+      {% else %}
+        <span style="font-size: 0.75rem; background: #388bfd; color: #fff; padding: 0.2rem 0.5rem; border-radius: 12px; font-weight: normal;">Exemplo Demonstrativo</span>
+      {% endif %}
+    </h1>
+    <span class="sub">ID EA: {{ club_id }} · Painel Tático e Estatísticas de Partidas</span>
+  </div>
+
+  {% if tracked_clubs and tracked_clubs|length > 1 %}
+    <div>
+      <select onchange="window.location.href='/dashboard?club_id=' + this.value" style="padding: 0.5rem 0.75rem; background: #161b22; color: #f0f6fc; border: 1px solid #30363d; border-radius: 6px; font-size: 0.9rem;">
+        {% for tc in tracked_clubs %}
+          <option value="{{ tc.club_id }}" {% if tc.club_id == club_id %}selected{% endif %}>{{ tc.club_name or ('Clube ' ~ tc.club_id) }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  {% endif %}
+</div>
+
+{% if is_demo_mode and not current_user %}
+<div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 0.75rem 1.25rem; margin-bottom: 1.5rem; color: #e0f2fe; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+  <span>ℹ️ Você está visualizando o clube de demonstração (MVL ES). Cadastre seu próprio time para salvar seu histórico real!</span>
+  <a href="/cadastro" style="background: #38bdf8; color: #000; font-weight: bold; padding: 0.35rem 0.75rem; border-radius: 4px; text-decoration: none;">Cadastrar Meu Clube</a>
+</div>
+{% endif %}
+
+{% if pending_reviews %}
+<div class="review-banner">
+  <strong>{{ pending_reviews }} partida(s) aguardando revisão de resultado.</strong>
+  <a href="/revisao" class="btn-link">Revisar agora</a>
+</div>
+{% endif %}
+
+{% set letter_labels = {"W": "V", "D": "E", "L": "D"} %}
+
+<div class="filter-bar">
+  <form method="get" action="/" class="filter-form">
+    <label>Tipo
+      <select name="tipo">
+        <option value="">Todos</option>
+        {% for key, label in type_labels.items() %}
+        <option value="{{ key }}" {% if filters.match_type == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Resultado
+      <select name="resultado">
+        <option value="">Todos</option>
+        {% for key, label in result_labels.items() %}
+        <option value="{{ key }}" {% if filters.result == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Adversário
+      <select name="adversario">
+        <option value="">Todos</option>
+        {% for opp in opponents %}
+        <option value="{{ opp.club_id }}" {% if filters.opponent == opp.club_id %}selected{% endif %}>{{ opp.name }} ({{ opp.played }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Janela
+      <select name="dias">
+        <option value="">Sempre</option>
+        <option value="7" {% if filters.days == 7 %}selected{% endif %}>7 dias</option>
+        <option value="30" {% if filters.days == 30 %}selected{% endif %}>30 dias</option>
+        <option value="90" {% if filters.days == 90 %}selected{% endif %}>90 dias</option>
+      </select>
+    </label>
+    <label>Últimos
+      <input type="number" name="n" min="1" max="100" value="{{ filters.last_n or '' }}" placeholder="—" style="width:5rem" />
+    </label>
+    <button type="submit" class="btn">Aplicar</button>
+    {% if filter_description %}<span class="sub">Filtros: {{ filter_description | join(' · ') }}</span>{% endif %}
+  </form>
+</div>
+
+<h2>Temporada oficial <span class="source-tag ea">Fonte: EA</span></h2>
+{% if official %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-value">{{ official.games_played }}</span>
+    <span class="stat-label">Jogos (toda a temporada)</span>
+  </div>
+  <div class="stat-card win">
+    <span class="stat-value">{{ official.wins }}</span>
+    <span class="stat-label">Vitórias</span>
+  </div>
+  <div class="stat-card draw">
+    <span class="stat-value">{{ official.draws }}</span>
+    <span class="stat-label">Empates</span>
+  </div>
+  <div class="stat-card loss">
+    <span class="stat-value">{{ official.losses }}</span>
+    <span class="stat-label">Derrotas</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ official.goals }}</span>
+    <span class="stat-label">Gols pró</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ official.goals_against }}</span>
+    <span class="stat-label">Gols contra</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ official.skill_rating or "—" }}</span>
+    <span class="stat-label">Skill Rating</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ official.ppg or "—" }}</span>
+    <span class="stat-label">Pontos/jogo</span>
+  </div>
+</div>
+<p class="sub">
+  Divisão melhor: {{ official.best_division or "—" }} ·
+  Promoções: {{ official.promotions }} · Rebaixamentos: {{ official.relegations }} ·
+  Sequência de vitórias: {{ official.win_streak }} · Invicto: {{ official.unbeaten_streak }}
+  {% if official.updated_at %} · Atualizado em {{ official.updated_at[:16].replace("T", " ") }}{% endif %}
+</p>
+<div class="form-strip">
+  <span class="form-label">Últimos jogos (EA):</span>
+  {% for item in official.last_opponents %}
+  <span class="form-pill {{ item.letter | lower }}" title="{{ item.opponent_name }}">{{ item.label }}</span>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">
+  Snapshot da temporada EA ainda não sincronizado. Rode <code>python __main__.py sync</code>
+  ou aguarde o próximo ciclo do worker.
+</p>
+{% endif %}
+
+<h2>Amostra local
+  <span class="source-tag local">Fonte: partidas registradas</span>
+  {% if filter_description %}<small class="sub">· {{ filter_description | join(' · ') }}</small>{% endif %}
+</h2>
+{% if local.played %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-value">{{ local.played }}</span>
+    <span class="stat-label">Partidas na amostra</span>
+  </div>
+  <div class="stat-card win">
+    <span class="stat-value">{{ local.wins }}</span>
+    <span class="stat-label">V</span>
+  </div>
+  <div class="stat-card draw">
+    <span class="stat-value">{{ local.draws }}</span>
+    <span class="stat-label">E</span>
+  </div>
+  <div class="stat-card loss">
+    <span class="stat-value">{{ local.losses }}</span>
+    <span class="stat-label">D</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ local.points }}</span>
+    <span class="stat-label">Pontos (3/1/0)</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ local.goals_per_game or "—" }}</span>
+    <span class="stat-label">Gols pró/jogo</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ local.goal_diff_per_game or "—" }}</span>
+    <span class="stat-label">Saldo/jogo</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ local.sessions }}</span>
+    <span class="stat-label">Sessões (dias)</span>
+  </div>
+</div>
+<div class="form-strip">
+  <span class="form-label">Forma recente (mais antiga → mais recente):</span>
+  {% for letter in local.form %}
+  <span class="form-pill {{ letter | lower }}" title="{{ letter_labels.get(letter, letter) }}">{{ letter_labels.get(letter, letter) }}</span>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">Nenhuma partida na amostra com os filtros atuais.</p>
+{% endif %}
+
+{% if local.played %}
+<h2>Gols por partida</h2>
+<div class="chart-container chart-lg">
+  <canvas id="goalsChart"
+          data-labels='{{ goals_chart.labels | tojson }}'
+          data-for='{{ goals_chart.goals_for | tojson }}'
+          data-against='{{ goals_chart.goals_against | tojson }}'
+          data-moving-for='{{ goals_chart.moving_for | tojson }}'
+          data-moving-against='{{ goals_chart.moving_against | tojson }}'></canvas>
+</div>
+{% endif %}
+
+<h2>Últimas partidas</h2>
+{% if recent %}
+<table class="table">
+  <thead>
+    <tr><th>Data</th><th>Adversário</th><th>Tipo</th><th>Placar</th><th>Resultado</th></tr>
+  </thead>
+  <tbody>
+    {% for m in recent %}
+    <tr>
+      <td>{{ m.played_at[:10] if m.played_at else "—" }}</td>
+      <td><a href="/h2h?adversario={{ m.opponent_id }}">{{ m.opponent_name }}</a></td>
+      <td><span class="badge type">{{ m.type_label }}</span>{% if m.dnf %} <span class="badge loss">DNF</span>{% endif %}</td>
+      <td class="{% if m.is_win %}txt-win{% elif m.is_draw %}txt-draw{% else %}txt-loss{% endif %}">
+        {{ m.goals_for }} – {{ m.goals_against }}
+      </td>
+      <td><span class="form-pill {{ m.letter | lower }}">{{ letter_labels.get(m.letter, m.letter) }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="sub"><a href="/partidas">Ver todas as partidas →</a></p>
+{% else %}
+<p class="empty">Nenhuma partida encontrada.</p>
+{% endif %}
+
+{% if top_players %}
+<h2>Destaques da amostra</h2>
+<div class="player-cards">
+  {% for p in top_players %}
+  <div class="player-card">
+    <div class="player-card-head">
+      <a href="/jogadores/{{ p.player_key }}" class="player-name">{{ p.playername }}</a>
+      {% if p.member_overall %}<span class="ovr-badge">{{ p.member_overall }}</span>{% endif %}
+    </div>
+    <span class="pos-badge {{ p.position_group | lower }}">{{ p.position_label }}</span>
+    <dl>
+      <div><dt>Nota</dt><dd>{{ "%.2f"|format(p.avg_rating) if p.avg_rating is not none else "—" }}</dd></div>
+      <div><dt>G+A/90</dt><dd>{{ p.involvement_per90 or "—" }}</dd></div>
+      <div><dt>Gols</dt><dd>{{ p.goals }}</dd></div>
+      <div><dt>Assist.</dt><dd>{{ p.assists }}</dd></div>
+      <div><dt>Minutos</dt><dd>{{ p.minutes }}</dd></div>
+      <div><dt>Power</dt><dd>{{ p.power_index or "—" }}</dd></div>
+    </dl>
+  </div>
+  {% endfor %}
+</div>
+<p class="sub"><a href="/jogadores">Ver elenco completo →</a></p>
+{% endif %}
+
+{% if not has_events %}
+<div class="empty">
+  <strong>Sem telemetria de eventos nesta amostra.</strong>
+  A EA só fornece eventos detalhados (passes, dribles, recuperações) para partidas de
+  <strong>liga e playoff</strong>; amistosos chegam sem eventos. Veja
+  <a href="/telemetria">Telemetria</a> após sincronizar jogos de liga.
+</div>
+{% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const canvas = document.getElementById("goalsChart");
+    if (!canvas || !window.Chart) return;
+    const data = canvas.dataset;
+    const labels = JSON.parse(data.labels || "[]");
+    const shared = {
+      borderColor: "rgba(148,163,184,0.25)",
+      borderDash: [4, 4],
+      pointRadius: 0,
+      fill: false,
+      tension: 0.3,
+    };
+    new Chart(canvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Gols pró", data: JSON.parse(data.for), borderColor: "#22c55e", backgroundColor: "rgba(34,197,94,0.15)", tension: 0.3 },
+          { label: "Gols contra", data: JSON.parse(data.against), borderColor: "#ef4444", backgroundColor: "rgba(239,68,68,0.12)", tension: 0.3 },
+          { label: "Média móvel pró (5)", data: JSON.parse(data.movingFor), ...shared },
+          { label: "Média móvel contra (5)", data: JSON.parse(data.movingAgainst), ...shared },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "rgba(42,45,58,0.6)" } },
+          x: { grid: { display: false }, ticks: { maxRotation: 60, autoSkip: true, maxTicksLimit: 20 } },
+        },
+      },
+    });
+  });
+</script>
+{% endblock %}

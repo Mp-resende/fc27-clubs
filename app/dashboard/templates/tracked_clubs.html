@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meus Clubes Monitorados — Upzin Scouts</title>
+  <meta name="description" content="Gerencie os clubes de Pro Clubs que você monitora no Upzin Scouts.">
+  <link rel="icon" type="image/png" href="/static/assets/icone-32.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#08090D',
+              surface: '#0F121A',
+              card: '#131722',
+              border: 'rgba(255, 255, 255, 0.08)',
+              mint: '#00F59B',
+              cyan: '#38BDF8',
+              text: '#EEF1F8',
+              muted: '#94A3B8',
+              subtle: '#64748B'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          boxShadow: {
+            'glow-cyan': '0 0 30px -5px rgba(56, 189, 248, 0.25)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .bg-grid-pattern {
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 3rem 3rem;
+    }
+  </style>
+</head>
+<body class="bg-brand-bg text-brand-text font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-brand-cyan selection:text-black relative">
+
+  <!-- Background Pattern -->
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute inset-0 bg-grid-pattern opacity-40"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="relative z-10 px-4 sm:px-6 lg:px-8 pt-5">
+    <div class="max-w-6xl mx-auto flex items-center justify-between backdrop-blur-xl bg-brand-surface/90 border border-brand-border rounded-2xl px-5 py-3.5 shadow-xl">
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="w-9 h-9 rounded-xl bg-brand-bg border border-white/10 flex items-center justify-center p-1.5 shadow-sm transition-transform group-hover:scale-105">
+          <img src="/static/assets/upzin-simbolo.svg" alt="Upzin Logo" class="w-full h-full object-contain">
+        </div>
+        <div class="flex flex-col">
+          <span class="font-display font-bold text-base text-white tracking-tight flex items-center gap-1.5">
+            UPZIN <span class="text-brand-cyan text-xs font-semibold px-1.5 py-0.5 rounded bg-brand-cyan/10 border border-brand-cyan/20">Scouts</span>
+          </span>
+        </div>
+      </a>
+
+      <div class="flex items-center gap-3">
+        {% if tracked %}
+          <a href="/dashboard" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-brand-cyan bg-brand-cyan/10 border border-brand-cyan/30 hover:bg-brand-cyan/20 transition-all flex items-center gap-1.5">
+            <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+            <span>Ir para o Dashboard</span>
+          </a>
+        {% endif %}
+        <span class="text-xs text-brand-subtle hidden sm:inline">{{ current_user.email if current_user else '' }}</span>
+        <a href="/logout" class="text-xs font-medium text-red-400 hover:text-red-300 py-1.5 px-2.5 rounded-lg border border-red-500/20 bg-red-500/5 transition-colors">
+          Sair
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="relative z-10 flex-1 max-w-5xl w-full mx-auto px-4 py-8 sm:py-12 space-y-8">
+
+    <!-- Mensagens de Feedback -->
+    {% if request.query_params.get('msg') %}
+      <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm flex items-center gap-3 shadow-lg">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+        <span>{{ request.query_params.get('msg') }}</span>
+      </div>
+    {% endif %}
+
+    {% if request.query_params.get('erro') %}
+      <div class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm flex items-center gap-3 shadow-lg">
+        <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 shrink-0"></i>
+        <span>{{ request.query_params.get('erro') }}</span>
+      </div>
+    {% endif %}
+
+    <!-- Banner de Boas-Vindas para Novo Usuário -->
+    {% if onboarding or not tracked %}
+      <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-brand-surface via-brand-card to-brand-surface border border-brand-cyan/30 shadow-glow-cyan">
+        <div class="max-w-2xl">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-cyan/15 border border-brand-cyan/30 text-brand-cyan text-xs font-mono font-semibold mb-3">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>Passo 1: Conecte seu Time</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-display font-black text-white">
+            Qual é o nome do seu clube no Pro Clubs?
+          </h1>
+          <p class="text-xs sm:text-sm text-brand-muted mt-2 leading-relaxed">
+            Como o ID numérico da EA é difícil de encontrar, você pode <strong>buscar diretamente pelo nome do seu time</strong> abaixo. Vamos localizar o registro oficial na EA Sports e iniciar o monitoramento.
+          </p>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- SEÇÃO DE BUSCA DE CLUBES POR NOME OU ID -->
+    <div class="p-6 sm:p-8 rounded-3xl bg-brand-surface border border-brand-border shadow-xl">
+      <div class="mb-5">
+        <h2 class="text-lg sm:text-xl font-display font-bold text-white flex items-center gap-2">
+          <i data-lucide="search" class="w-5 h-5 text-brand-cyan"></i>
+          <span>Buscar Clube na EA Sports</span>
+        </h2>
+        <p class="text-xs text-brand-muted mt-1">
+          Digite o nome do seu clube (ou parte dele) ou informe o ID numérico caso já saiba.
+        </p>
+      </div>
+
+      <form method="GET" action="/meus-clubes" class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-subtle">
+            <i data-lucide="shield" class="w-4 h-4"></i>
+          </div>
+          <input 
+            type="text" 
+            name="q" 
+            value="{{ search_query }}"
+            required 
+            placeholder="Ex: MVL, Vasco, Flamengo, Real Madrid, Galáticos..." 
+            class="w-full pl-10 pr-4 py-3.5 rounded-xl bg-brand-bg border border-brand-border focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan outline-none text-white text-sm placeholder:text-brand-subtle transition-all"
+          >
+        </div>
+
+        <select name="platform" class="px-4 py-3.5 rounded-xl bg-brand-bg border border-brand-border text-xs text-brand-text font-medium outline-none">
+          <option value="common-gen5" selected>PS5 / Xbox Series / PC</option>
+          <option value="common-gen4">PS4 / Xbox One</option>
+        </select>
+
+        <button 
+          type="submit" 
+          class="px-6 py-3.5 rounded-xl bg-brand-cyan hover:brightness-110 text-black font-bold text-xs sm:text-sm shadow-glow-cyan transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+        >
+          <i data-lucide="search" class="w-4 h-4"></i>
+          <span>Buscar Clube</span>
+        </button>
+      </form>
+
+      <!-- RESULTADOS DA BUSCA -->
+      {% if search_query %}
+        <div class="mt-8 pt-6 border-t border-white/5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-mono uppercase tracking-wider text-brand-muted">
+              Resultados para "<strong class="text-white">{{ search_query }}</strong>" ({{ search_results|length }})
+            </h3>
+            <span class="text-[11px] text-brand-subtle">Dados oficiais via EA Sports API</span>
+          </div>
+
+          {% if search_results %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {% for club in search_results %}
+                <div class="p-4 rounded-2xl bg-brand-card border border-brand-border hover:border-brand-cyan/50 transition-all flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-3.5 min-w-0">
+                    <div class="w-12 h-12 rounded-xl bg-brand-bg border border-white/10 flex items-center justify-center p-1 shrink-0 overflow-hidden">
+                      {% if club.crest_url %}
+                        <img src="{{ club.crest_url }}" alt="Escudo" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/static/assets/upzin-simbolo.svg';">
+                      {% else %}
+                        <i data-lucide="shield" class="w-6 h-6 text-brand-cyan"></i>
+                      {% endif %}
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="font-display font-bold text-sm text-white truncate">{{ club.name }}</h4>
+                      <div class="flex items-center gap-2 text-[11px] text-brand-muted mt-0.5">
+                        <span class="font-mono text-brand-cyan">ID: {{ club.club_id }}</span>
+                        <span>•</span>
+                        <span>Divisão {{ club.current_division }}</span>
+                      </div>
+                      <div class="text-[10px] text-brand-subtle mt-0.5">
+                        {{ club.wins }}V / {{ club.ties }}E / {{ club.losses }}D ({{ club.games_played }} jogos)
+                      </div>
+                    </div>
+                  </div>
+
+                  <form method="POST" action="/meus-clubes/adicionar" class="shrink-0 m-0">
+                    <input type="hidden" name="club_id" value="{{ club.club_id }}">
+                    <input type="hidden" name="club_name" value="{{ club.name }}">
+                    <input type="hidden" name="platform" value="{{ club.platform }}">
+                    <button 
+                      type="submit" 
+                      class="px-3.5 py-2 rounded-xl bg-brand-cyan hover:brightness-110 text-black text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                      <span>Monitorar</span>
+                    </button>
+                  </form>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="p-8 text-center rounded-2xl bg-brand-card/50 border border-brand-border/50 text-brand-muted text-xs">
+              <i data-lucide="help-circle" class="w-8 h-8 mx-auto text-brand-subtle mb-2"></i>
+              <p class="font-semibold text-white">Nenhum clube encontrado com o termo "{{ search_query }}"</p>
+              <p class="mt-1 text-brand-subtle">Dica: Tente pesquisar por apenas uma palavra do nome do clube ou confira se a plataforma (PS5/Xbox) está correta.</p>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- SEÇÃO DE CLUBES MONITORADOS PELO USUÁRIO -->
+    <div class="p-6 sm:p-8 rounded-3xl bg-brand-surface border border-brand-border shadow-xl">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h2 class="text-lg sm:text-xl font-display font-bold text-white flex items-center gap-2">
+            <i data-lucide="activity" class="w-5 h-5 text-brand-mint"></i>
+            <span>Seus Clubes Ativos ({{ tracked|length }})</span>
+          </h2>
+          <p class="text-xs text-brand-muted mt-1">
+            Partidas destes clubes são salvas no seu histórico para gerar notas e gráficos de desempenho.
+          </p>
+        </div>
+      </div>
+
+      {% if tracked %}
+        <div class="space-y-3">
+          {% for tc in tracked %}
+            <div class="p-4 rounded-2xl bg-brand-card border border-brand-border flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-brand-bg border border-white/10 flex items-center justify-center text-brand-cyan font-bold font-mono">
+                  {{ loop.index }}
+                </div>
+                <div>
+                  <h3 class="font-display font-bold text-sm text-white">{{ tc.club_name or ('Clube ' ~ tc.club_id) }}</h3>
+                  <div class="flex items-center gap-2 text-xs text-brand-muted mt-0.5">
+                    <span class="font-mono text-brand-subtle">ID: {{ tc.club_id }}</span>
+                    <span>•</span>
+                    <span class="inline-flex items-center gap-1 text-brand-mint text-[11px]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-brand-mint animate-pulse"></span>
+                      Monitorando
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2.5">
+                <a 
+                  href="/dashboard?club_id={{ tc.club_id }}" 
+                  class="px-3.5 py-2 rounded-xl bg-brand-mint hover:bg-brand-accent text-black text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                >
+                  <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+                  <span>Abrir Dashboard</span>
+                </a>
+
+                <form method="POST" action="/meus-clubes/remover/{{ tc.club_id }}" class="m-0" onsubmit="return confirm('Tem certeza que deseja remover este clube do monitoramento?');">
+                  <button 
+                    type="submit" 
+                    class="p-2 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 text-xs transition-colors cursor-pointer"
+                    title="Remover do monitoramento"
+                  >
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="p-8 text-center rounded-2xl bg-brand-card/30 border border-brand-border/40 text-brand-muted text-xs">
+          <i data-lucide="shield-alert" class="w-8 h-8 mx-auto text-brand-subtle mb-2"></i>
+          <p class="font-semibold text-white">Você ainda não possui nenhum clube em monitoramento.</p>
+          <p class="mt-1 text-brand-subtle">Utilize o campo de busca acima pelo nome do seu time para adicionar seu primeiro clube!</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 py-6 text-center text-xs text-brand-subtle">
+    Upzin Scouts • Inteligência tática para o Pro Clubs
+  </footer>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

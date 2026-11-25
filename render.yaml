@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: fc27-clubs
+    env: python
+    buildCommand: pip install .
+    startCommand: python __main__.py both
+    plan: starter
+    disk:
+      name: fc27-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: SERVER_HOST
+        value: 0.0.0.0
+      - key: DB_PATH
+        value: /data/fc27_clubs.db
+      - key: BACKUP_DIR
+        value: /data/backups
+      - key: EVIDENCE_DIR
+        value: /data/evidence
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PLATFORM
+        value: common-gen5
+      - key: INGEST_INTERVAL_SECONDS
+        value: "300"
+      - key: INGEST_JITTER_SECONDS
+        value: "30"

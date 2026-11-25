@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% block title %}Análise{% endblock %}
+
+{% block content %}
+<h1>Análise do Time</h1>
+<p class="sub">{{ total_matches }} partida(s) na amostra com os filtros atuais.</p>
+
+<div class="filter-bar">
+  <form method="get" action="/analise" class="filter-form">
+    <label>Tipo
+      <select name="tipo">
+        <option value="">Todos</option>
+        {% for key, label in type_labels.items() %}
+        <option value="{{ key }}" {% if filters.match_type == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Resultado
+      <select name="resultado">
+        <option value="">Todos</option>
+        {% for key, label in result_labels.items() %}
+        <option value="{{ key }}" {% if filters.result == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Margem
+      <select name="margem">
+        <option value="">Qualquer</option>
+        {% for key, label in margin_labels.items() %}
+        <option value="{{ key }}" {% if filters.margin == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Adversário
+      <select name="adversario">
+        <option value="">Todos</option>
+        {% for opp in opponents %}
+        <option value="{{ opp.club_id }}" {% if filters.opponent == opp.club_id %}selected{% endif %}>{{ opp.name }} ({{ opp.played }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Min. minutos
+      <input type="number" name="min_min" min="0" max="900" value="{{ min_min }}" style="width:5rem" />
+    </label>
+    <label>Ordem
+      <select name="ordem">
+        <option value="power" {% if ordem == "power" %}selected{% endif %}>Power Index</option>
+        <option value="ga90" {% if ordem == "ga90" %}selected{% endif %}>G+A/90</option>
+        <option value="rating" {% if ordem == "rating" %}selected{% endif %}>Nota</option>
+        <option value="goals" {% if ordem == "goals" %}selected{% endif %}>Gols</option>
+        <option value="minutes" {% if ordem == "minutes" %}selected{% endif %}>Minutos</option>
+        <option value="name" {% if ordem == "name" %}selected{% endif %}>Nome</option>
+      </select>
+    </label>
+    <button type="submit" class="btn">Aplicar</button>
+    {% if filter_description %}<span class="sub">{{ filter_description | join(' · ') }}</span>{% endif %}
+  </form>
+</div>
+
+<h2>Performance da amostra</h2>
+{% if summary.played %}
+<div class="stats-grid">
+  <div class="stat-card"><span class="stat-value">{{ summary.played }}</span><span class="stat-label">Partidas</span></div>
+  <div class="stat-card win"><span class="stat-value">{{ summary.win_rate or 0 }}%</span><span class="stat-label">Aproveitamento</span></div>
+  <div class="stat-card"><span class="stat-value">{{ summary.ppg or "—" }}</span><span class="stat-label">Pontos/jogo</span></div>
+  <div class="stat-card"><span class="stat-value">{{ summary.goals_per_game or "—" }}</span><span class="stat-label">Gols pró/jogo</span></div>
+  <div class="stat-card"><span class="stat-value">{{ summary.goals_against_per_game or "—" }}</span><span class="stat-label">Gols contra/jogo</span></div>
+  <div class="stat-card"><span class="stat-value">{{ summary.goal_diff }}</span><span class="stat-label">Saldo de gols</span></div>
+</div>
+<div class="form-strip">
+  <span class="form-label">Forma (antiga → recente):</span>
+  {% for letter in summary.form %}
+  <span class="form-pill {{ letter | lower }}">{{ letter }}</span>
+  {% endfor %}
+</div>
+
+<h2>Gols por partida</h2>
+<div class="chart-container chart-lg">
+  <canvas id="analyticsGoalsChart"
+          data-labels='{{ chart.labels | tojson }}'
+          data-for='{{ chart.goals_for | tojson }}'
+          data-against='{{ chart.goals_against | tojson }}'
+          data-moving-for='{{ chart.moving_for | tojson }}'
+          data-moving-against='{{ chart.moving_against | tojson }}'></canvas>
+</div>
+{% else %}
+<p class="empty">Nenhuma partida com os filtros atuais.</p>
+{% endif %}
+
+{% if official %}
+<h3 class="sub">Referência temporada EA: {{ official.games_played }} jogos · {{ official.wins }}V {{ official.draws }}E {{ official.losses }}D ·
+  skill rating {{ official.skill_rating or "—" }}</h3>
+{% endif %}
+
+{% if profile.has_events %}
+<h2>Assinatura do time <span class="source-tag local">eventos da amostra</span></h2>
+<div class="chart-grid">
+  <div class="chart-container">
+    <canvas id="profileRadar"
+            data-labels='{{ profile.radar | map(attribute="label") | list | tojson }}'
+            data-values='{{ profile.radar | map(attribute="value") | list | tojson }}'>
+    </canvas>
+  </div>
+  <div class="panel">
+    <h3>Indicadores</h3>
+    <table class="table">
+      <thead><tr><th>Métrica</th><th>Valor</th></tr></thead>
+      <tbody>
+        <tr><td>Passes certos/90</td><td>{{ profile.per90.passes or "—" }}</td></tr>
+        <tr><td>Verticalidade dos passes</td><td>{{ profile.per90.verticality or "—" }}%</td></tr>
+        <tr><td>Recuperações no ataque/90</td><td>{{ profile.per90.press_wins or "—" }}</td></tr>
+        <tr><td>Ações defensivas/90</td><td>{{ profile.per90.def_actions or "—" }}</td></tr>
+        <tr><td>Chutes no gol/90</td><td>{{ profile.per90.shots_on_target or "—" }}</td></tr>
+        <tr><td>Dribles/90</td><td>{{ profile.per90.dribbles or "—" }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h3>Recuperadas x perdidas por terço (o time pressiona onde?)</h3>
+<table class="table thirds-table">
+  <thead><tr><th>Terço</th><th>Recuperadas</th><th>Perdidas</th><th>Recuperadas %</th></tr></thead>
+  <tbody>
+    {% for name, key in [("Campo defensivo", "defensive"), ("Meio-campo", "middle"), ("Ataque", "attacking")] %}
+    {% set won_t = profile.thirds.won[key] %}
+    {% set lost_t = profile.thirds.lost[key] %}
+    <tr>
+      <td>{{ name }}</td>
+      <td>{{ won_t }}</td>
+      <td>{{ lost_t }}</td>
+      <td>{{ "%.0f"|format(100 * won_t / (won_t + lost_t)) if (won_t + lost_t) else "—" }}%</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Direção dos passes por jogador</h3>
+{% if directions %}
+<table class="table">
+  <thead><tr><th>Jogador</th><th>Frente</th><th>Lado</th><th>Trás</th><th>Total</th><th>Verticalidade</th></tr></thead>
+  <tbody>
+    {% for d in directions %}
+    <tr>
+      <td><a href="/jogadores/{{ d.player_key }}">{{ d.playername }}</a></td>
+      <td>{{ d.forward }}</td><td>{{ d.sideways }}</td><td>{{ d.backward }}</td>
+      <td><strong>{{ d.total }}</strong></td>
+      <td>{{ d.verticality }}%</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">Nenhum jogador com passes directionais na amostra.</p>
+{% endif %}
+{% elif summary.played %}
+<div class="empty">
+  <strong>Sem telemetria de eventos nos filtros atuais.</strong>
+  A EA só exporta eventos de liga/playoff — a assinatura do time exige partidas desses tipos.
+</div>
+{% endif %}
+
+<h2>Sessões de jogo <span class="sub">agrupadas por dia</span></h2>
+{% if sessions %}
+<div class="session-grid">
+  {% for s in sessions %}
+  <div class="session-card {{ 'grade-good' if s.grade >= 70 else ('grade-mid' if s.grade >= 45 else 'grade-bad') }}">
+    <div class="session-head">
+      <span class="session-date">{{ s.date }}</span>
+      <span class="session-score">{{ s.grade }}</span>
+    </div>
+    <p class="sub small">{{ s.played }} jogos · {{ s.wins }}V {{ s.draws }}E {{ s.losses }}D · {{ s.goals_for }}:{{ s.goals_against }}</p>
+    <div class="session-pills">
+      {% for m in s.matches %}
+      <span class="form-pill {{ m.letter | lower }}" title="{{ m.match_id[-8:] }}" data-url="/partidas/{{ m.match_id }}">
+        {{ m.goals_for }}:{{ m.goals_against }}
+      </span>
+      {% endfor %}
+    </div>
+    <p class="sub small">
+      {{ "Melhor: " + s.best_player + " (" + s.best_rating | string + ")" if s.best_player else "" }}
+      {{ " · Matador: " + s.top_scorer + " (" + s.top_scorer_goals | string + "G)" if s.top_scorer else "" }}
+    </p>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">Sem sessões nos filtros atuais.</p>
+{% endif %}
+
+<h2>Jogadores na amostra <span class="sub">mín. {{ min_min }} min</span></h2>
+{% if players %}
+<div class="table-wrap">
+<table class="table sortable" id="analytics-table">
+  <thead>
+    <tr>
+      <th>#</th><th>Jogador</th><th>Pos.</th><th>Jogos</th><th>Min.</th>
+      <th>G</th><th>A</th><th>G+A/90</th><th>Nota</th><th>×Pos</th>
+      <th>Consist.</th><th>Clutch</th><th>Particip.</th><th>MOM</th><th>Data last</th><th>Power</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in players %}
+    <tr>
+      <td>{{ p.rank }}</td>
+      <td><a href="/jogadores/{{ p.player_key }}">{{ p.playername }}</a></td>
+      <td><span class="pos-badge {{ p.position_group | lower }}">{{ p.position_label }}</span></td>
+      <td>{{ p.matches }}</td>
+      <td>{{ p.minutes }}</td>
+      <td>{{ p.goals }}</td>
+      <td>{{ p.assists }}</td>
+      <td>{{ p.involvement_per90 }}</td>
+      <td class="rating {% if p.avg_rating and p.avg_rating >= 7 %}rating-good{% elif p.avg_rating and p.avg_rating >= 6 %}rating-avg{% elif p.avg_rating %}rating-bad{% endif %}">
+        {{ "%.2f"|format(p.avg_rating) if p.avg_rating is not none else "—" }}
+      </td>
+      <td class="{% if p.rating_adj and p.rating_adj > 0 %}txt-win{% elif p.rating_adj and p.rating_adj < 0 %}txt-loss{% endif %}">
+        {{ "%+.2f"|format(p.rating_adj) if p.rating_adj is not none else "—" }}
+      </td>
+      <td>{{ p.consistency or "—" }}</td>
+      <td class="{% if p.clutch and p.clutch > 0 %}txt-win{% elif p.clutch and p.clutch < 0 %}txt-loss{% endif %}">
+        {{ "%+.2f"|format(p.clutch) if p.clutch is not none else "—" }}
+      </td>
+      <td>{{ p.participation or "—" }}%</td>
+      <td>{{ p.motm }}</td>
+      <td>{{ p.last_played_at[:10] if p.last_played_at else "—" }}</td>
+      <td><strong>{{ p.power_index or "—" }}</strong></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">Nenhum jogador com os filtros atuais.</p>
+{% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (!window.Chart) return;
+    const goals = document.getElementById("analyticsGoalsChart");
+    if (goals) {
+      const shared = { borderColor: "rgba(148,163,184,0.25)", borderDash: [4, 4], pointRadius: 0, fill: false, tension: 0.3 };
+      new Chart(goals, {
+        type: "line",
+        data: {
+          labels: JSON.parse(goals.dataset.labels || "[]"),
+          datasets: [
+            { label: "Gols pró", data: JSON.parse(goals.dataset.for), borderColor: "#22c55e", tension: 0.3 },
+            { label: "Gols contra", data: JSON.parse(goals.dataset.against), borderColor: "#ef4444", tension: 0.3 },
+            { label: "MM pró", data: JSON.parse(goals.dataset.movingFor), ...shared },
+            { label: "MM contra", data: JSON.parse(goals.dataset.movingAgainst), ...shared },
+          ],
+        },
+        options: commonLineOptions(),
+      });
+    }
+    const radar = document.getElementById("profileRadar");
+    if (radar) {
+      new Chart(radar, {
+        type: "radar",
+        data: {
+          labels: JSON.parse(radar.dataset.labels || "[]"),
+          datasets: [{
+            label: "Time",
+            data: JSON.parse(radar.dataset.values || "[]"),
+            borderColor: "#3b82f6",
+            backgroundColor: "rgba(59,130,246,0.2)",
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { r: { min: 0, max: 100, pointLabels: { color: "#94a3b8" }, grid: { color: "rgba(42,45,58,0.8)" } } },
+          plugins: { legend: { display: false } },
+        },
+      });
+    }
+
+    function commonLineOptions() {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: {
+          y: { beginAtZero: true, grid: { color: "rgba(42,45,58,0.6)" } },
+          x: { grid: { display: false }, ticks: { maxRotation: 60, autoSkip: true, maxTicksLimit: 18 } },
+        },
+      };
+    }
+  });
+</script>
+{% endblock %}

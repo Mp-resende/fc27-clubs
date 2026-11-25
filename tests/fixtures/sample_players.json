@@ -1,0 +1,38 @@
+{
+  "player_a2_midfielder": {
+    "playername": "Midfielder8",
+    "position": "CM",
+    "rating": "7.5",
+    "secondsPlayed": "5400",
+    "goals": "1",
+    "assists": "2",
+    "match_event_aggregate_0": "215:45,216:10,26:20,27:5,28:8,29:2,6:3",
+    "match_event_aggregate_1": "143:5,144:2,152:3",
+    "match_event_aggregate_2": "0:5,1:2,111:30,219:5",
+    "match_event_aggregate_3": "95:1"
+  },
+  "player_b2_opp_mid": {
+    "playername": "OppMid",
+    "position": "CM",
+    "rating": "6.0",
+    "secondsPlayed": "5400",
+    "goals": "0",
+    "assists": "1",
+    "match_event_aggregate_0": "215:25,216:10,2:4,3:2",
+    "match_event_aggregate_1": "95:1,213:1",
+    "match_event_aggregate_2": "",
+    "match_event_aggregate_3": ""
+  },
+  "player_a5_sub": {
+    "playername": "SubPlayer9",
+    "position": "LW",
+    "rating": "0",
+    "secondsPlayed": "0",
+    "goals": "0",
+    "assists": "0",
+    "match_event_aggregate_0": "",
+    "match_event_aggregate_1": "",
+    "match_event_aggregate_2": "",
+    "match_event_aggregate_3": ""
+  }
+}
