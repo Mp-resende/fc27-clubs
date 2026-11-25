@@ -4,6 +4,7 @@ from sqlalchemy import (
     Column,
     Float,
     ForeignKey,
+    ForeignKeyConstraint,
     Integer,
     String,
     Text,
@@ -27,7 +28,11 @@ class Club(Base):
     first_seen_at = Column(String, nullable=False)
     updated_at = Column(String, nullable=False)
 
-    club_matches: list[ClubMatch] = relationship("ClubMatch", back_populates="club", foreign_keys="ClubMatch.club_id")
+    club_matches: list[ClubMatch] = relationship(
+        "ClubMatch",
+        back_populates="club",
+        primaryjoin="and_(Club.club_id == ClubMatch.club_id, Club.platform == ClubMatch.platform)",
+    )
 
     def __repr__(self) -> str:
         return f"<Club club_id={self.club_id!r} name={self.name!r} platform={self.platform!r}>"
@@ -89,8 +94,14 @@ class Match(Base):
 
 class ClubMatch(Base):
     __tablename__ = "club_matches"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["club_id", "platform"],
+            ["clubs.club_id", "clubs.platform"],
+        ),
+    )
 
-    club_id = Column(String, ForeignKey("clubs.club_id"), primary_key=True)
+    club_id = Column(String, primary_key=True)
     match_id = Column(String, ForeignKey("matches.match_id"), primary_key=True)
     platform = Column(String, nullable=False, default="common-gen5")
     goals_for = Column(Integer, nullable=False)
@@ -102,7 +113,11 @@ class ClubMatch(Base):
     # ou aguardando revisão). Ver app.core.review.
     is_ignored = Column(Integer, nullable=False, default=0)
 
-    club: Club = relationship("Club", back_populates="club_matches")
+    club: Club = relationship(
+        "Club",
+        back_populates="club_matches",
+        primaryjoin="and_(Club.club_id == ClubMatch.club_id, Club.platform == ClubMatch.platform)",
+    )
     match: Match = relationship("Match", back_populates="club_matches")
 
     def __repr__(self) -> str:
